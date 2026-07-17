@@ -516,8 +516,40 @@ Si une étape échoue → ROLLBACK complet.
 
 > *À remplir au fur et à mesure de l'avancement.*
 
-### Bilan P0 – Conception
-*(à venir)*
+### Bilan P0 – Conception ✅ Terminée (17/07/2026)
+
+**Livrables produits :**
+
+| Livrable | Fichier | État |
+|---|---|---|
+| Modèle de données | [`docs/DATABASE.md`](DATABASE.md) + [`database/schema.sql`](../database/schema.sql) | ✅ |
+| Matrice de transitions | [`docs/WORKFLOW.md`](WORKFLOW.md) | ✅ |
+| Contrat d'API | [`docs/API.md`](API.md) | ✅ |
+| Arborescence des écrans | [`docs/ECRANS.md`](ECRANS.md) | ✅ |
+| Conventions de code | [`docs/CONVENTIONS.md`](CONVENTIONS.md) | ✅ |
+| Jeu de données de test | [`database/seed.sql`](../database/seed.sql) | ✅ |
+| Modèles d'environnement | `server/.env.example`, `client/.env.example` | ✅ |
+
+**Revue de cohérence (R1→R7) :**
+
+| # | Vérification | Résultat |
+|---|---|---|
+| R1 | CDC → API : chaque EF01→EF24 couverte | ✅ 100 % (table de traçabilité API §10) |
+| R2 | API → Écrans : chaque endpoint consommé | ✅ (colonne « Écran » de la traçabilité) |
+| R3 | Workflow → API : 8 transitions = 8 endpoints ; matrice 7×7 = erreurs 409 | ✅ |
+| R4 | BD → API : aucun champ exposé absent du schéma | ✅ |
+| R5 | Permissions : CDC §3 = rôles endpoints = tableau (rôle×statut) écran Détail | ✅ Zéro contradiction |
+| R6 | Seed → Démo : 15 demandes couvrant les 7 statuts + historique cohérent | ✅ |
+| R7 | Relecture des 6 documents | ✅ |
+
+**Décisions structurantes tranchées :** VARCHAR+CHECK (statuts/rôles), FK RESTRICT partout,
+TIMESTAMPTZ, actions nommées pour les transitions, Vite, JWT en localStorage, polling 30 s
+pour les notifications. (Détail et justifications dans `DATABASE.md §4`.)
+
+**Point en suspens (à lever en P1) :** exécution réelle de `schema.sql` + `seed.sql` sur
+PostgreSQL (non installé en P0). À valider dès la mise en place de l'environnement.
+
+**→ Décision : passage en P1 (Fondations techniques) autorisé.**
 
 ### Bilan P1 – Fondations
 *(à venir)*
