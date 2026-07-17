@@ -1,9 +1,23 @@
+# Dépendances
 node_modules/
+
+# Variables d'environnement (ne jamais committer)
 .env
 .env.local
-uploads/
-*.log
+.env.*.local
+
+# Uploads : ignorer les fichiers mais garder le dossier
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Builds
 dist/
 build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Système
 .DS_Store
 Thumbs.db
