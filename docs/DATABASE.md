@@ -8,10 +8,11 @@
 ## Sommaire
 
 1. [Vue d'ensemble](#1-vue-densemble)
-2. [Diagramme relationnel (MLD)](#2-diagramme-relationnel-mld)
-3. [Dictionnaire de données](#3-dictionnaire-de-données)
-4. [Décisions de conception](#4-décisions-de-conception)
-5. [Règles métier portées par la base](#5-règles-métier-portées-par-la-base)
+2. [Modèle Conceptuel de Données (MCD)](#2-modèle-conceptuel-de-données-mcd)
+3. [Modèle Logique de Données (MLD)](#3-modèle-logique-de-données-mld)
+4. [Dictionnaire de données](#4-dictionnaire-de-données)
+5. [Décisions de conception](#5-décisions-de-conception)
+6. [Règles métier portées par la base](#6-règles-métier-portées-par-la-base)
 
 ---
 
@@ -28,59 +29,196 @@ gravitent autour d'elle et autour de `users`.
 | `historique_statuts` | Journal immuable des transitions de statut | N lignes par demande |
 | `commentaires` | Fil de discussion (optionnel — OPT01) | N commentaires par demande |
 
----
-
-## 2. Diagramme relationnel (MLD)
-
-```
-                          ┌─────────────────────────┐
-                          │         users           │
-                          │─────────────────────────│
-                          │ PK id                    │
-                          │    nom, prenom           │
-                          │    email (UNIQUE)        │
-                          │    password_hash         │
-                          │    role                  │
-                          │    structure, actif      │
-                          │    created_at            │
-                          └───────────┬─────────────┘
-                    demandeur_id │    │ juriste_id
-             ┌───────────────────┘    └──────────────────┐
-             │ (1,N)                               (0,N)  │
-             ▼                                            ▼
-   ┌──────────────────────────────────────────────────────────┐
-   │                      demande_avis                          │
-   │────────────────────────────────────────────────────────────│
-   │ PK id                                                      │
-   │    titre, theme, description, degre_sensibilite            │
-   │    statut                                                  │
-   │ FK demandeur_id ─────▶ users.id                            │
-   │ FK juriste_id   ─────▶ users.id  (nullable)                │
-   │    avis_juridique, commentaire_complement, motif_rejet     │
-   │    piece_jointe_{nom,path,type,taille}                     │
-   │    date_creation, date_soumission, date_traitement         │
-   └───┬──────────────────┬───────────────────────┬────────────┘
-       │ (1,N)            │ (1,N)                  │ (1,N)
-       ▼                  ▼                        ▼
-┌──────────────┐  ┌────────────────────┐  ┌──────────────────┐
-│ notifications│  │ historique_statuts │  │  commentaires    │
-│──────────────│  │────────────────────│  │  (optionnel)     │
-│ PK id        │  │ PK id              │  │──────────────────│
-│ FK user_id   │  │ FK demande_id      │  │ PK id            │
-│ FK demande_id│  │ FK user_id         │  │ FK demande_id    │
-│    message   │  │    ancien_statut   │  │ FK auteur_id     │
-│    lue       │  │    nouveau_statut  │  │    contenu       │
-│    created_at│  │    commentaire     │  │    created_at    │
-└──────────────┘  │    created_at      │  └──────────────────┘
-                  └────────────────────┘
-   (notifications.user_id et historique.user_id → users.id également)
-```
+> Les deux modèles ci-dessous se lisent en cascade : le **MCD** (§2) décrit le métier sans
+> technologie, le **MLD** (§3) le traduit en tables relationnelles avec clés et types, et le
+> **dictionnaire** (§4) détaille chaque colonne. Les diagrammes sont en **Mermaid** et se
+> rendent automatiquement sur GitHub.
 
 ---
 
-## 3. Dictionnaire de données
+## 2. Modèle Conceptuel de Données (MCD)
 
-### 3.1 Table `users`
+Le MCD décrit le métier **indépendamment de toute technologie** : les entités, leurs
+propriétés, et les associations qui les relient, avec leurs **cardinalités** (notation Merise).
+À ce niveau, il n'y a **ni clé étrangère ni type SQL** — les liens sont portés par les associations.
+
+```mermaid
+erDiagram
+    UTILISATEUR ||--o{ DEMANDE      : "initie"
+    UTILISATEUR |o--o{ DEMANDE      : "traite"
+    DEMANDE     ||--o{ HISTORIQUE   : "subit"
+    UTILISATEUR ||--o{ HISTORIQUE   : "effectue"
+    UTILISATEUR ||--o{ NOTIFICATION : "recoit"
+    DEMANDE     |o--o{ NOTIFICATION : "concerne"
+    DEMANDE     ||--o{ COMMENTAIRE  : "porte"
+    UTILISATEUR ||--o{ COMMENTAIRE  : "redige"
+
+    UTILISATEUR {
+        identifiant id
+        texte   nom
+        texte   prenom
+        texte   email
+        texte   role
+        texte   structure
+        booleen actif
+    }
+    DEMANDE {
+        identifiant id
+        texte   titre
+        texte   theme
+        texte   description
+        texte   degre_sensibilite
+        texte   statut
+        texte   avis_juridique
+    }
+    HISTORIQUE {
+        identifiant id
+        texte   ancien_statut
+        texte   nouveau_statut
+        texte   commentaire
+        date    date_transition
+    }
+    NOTIFICATION {
+        identifiant id
+        texte   message
+        booleen lue
+        date    date_emission
+    }
+    COMMENTAIRE {
+        identifiant id
+        texte   contenu
+        date    date_publication
+    }
+```
+
+### Associations et cardinalités (Merise)
+
+| Association | Entité 1 | Card. 1 | Entité 2 | Card. 2 | Sens de lecture |
+|---|---|:---:|---|:---:|---|
+| **Initier** | UTILISATEUR | (0,n) | DEMANDE | (1,1) | Un utilisateur initie 0..n demandes ; une demande est initiée par 1 et 1 seul demandeur |
+| **Traiter** | UTILISATEUR | (0,n) | DEMANDE | (0,1) | Un juriste traite 0..n demandes ; une demande est traitée par 0 ou 1 juriste |
+| **Subir** | DEMANDE | (1,n) | HISTORIQUE | (1,1) | Une demande subit 1..n transitions ; une transition porte sur 1 demande |
+| **Effectuer** | UTILISATEUR | (0,n) | HISTORIQUE | (1,1) | Un utilisateur effectue 0..n transitions ; une transition est faite par 1 utilisateur |
+| **Recevoir** | UTILISATEUR | (0,n) | NOTIFICATION | (1,1) | Un utilisateur reçoit 0..n notifications ; une notification a 1 destinataire |
+| **Concerner** | DEMANDE | (0,n) | NOTIFICATION | (0,1) | Une demande concerne 0..n notifications ; une notification concerne 0 ou 1 demande |
+| **Porter** | DEMANDE | (1,n) | COMMENTAIRE | (1,1) | Une demande porte 0..n commentaires ; un commentaire porte sur 1 demande |
+| **Rédiger** | UTILISATEUR | (0,n) | COMMENTAIRE | (1,1) | Un utilisateur rédige 0..n commentaires ; un commentaire a 1 auteur |
+
+> **Lecture de la notation Merise (min, max)** : `(0,1)` = optionnel, au plus un ·
+> `(1,1)` = obligatoire, exactement un · `(0,n)` = optionnel, plusieurs possibles ·
+> `(1,n)` = obligatoire, au moins un.
+>
+> **Double rôle de UTILISATEUR** : la même entité joue deux rôles distincts vis-à-vis de
+> DEMANDE — **demandeur** (association *Initier*) et **juriste** (association *Traiter*).
+> Ces deux rôles deviennent deux clés étrangères dans le MLD.
+
+---
+
+## 3. Modèle Logique de Données (MLD)
+
+Le MLD est la **traduction relationnelle** du MCD : chaque entité devient une table, et chaque
+association du côté « (x,1) » devient une **clé étrangère**. Les types SQL et les clés (PK/FK/UK)
+apparaissent ici. C'est le modèle qu'implémente [`schema.sql`](../database/schema.sql).
+
+```mermaid
+erDiagram
+    users        ||--o{ demande_avis       : "demandeur_id"
+    users        |o--o{ demande_avis       : "juriste_id"
+    demande_avis ||--o{ historique_statuts : "demande_id"
+    users        ||--o{ historique_statuts : "user_id"
+    users        ||--o{ notifications      : "user_id"
+    demande_avis |o--o{ notifications      : "demande_id"
+    demande_avis ||--o{ commentaires       : "demande_id"
+    users        ||--o{ commentaires       : "auteur_id"
+
+    users {
+        SERIAL      id PK
+        VARCHAR     nom
+        VARCHAR     prenom
+        VARCHAR     email UK
+        VARCHAR     password_hash
+        VARCHAR     role
+        VARCHAR     structure
+        BOOLEAN     actif
+        TIMESTAMPTZ created_at
+    }
+    demande_avis {
+        SERIAL      id PK
+        VARCHAR     titre
+        VARCHAR     theme
+        TEXT        description
+        VARCHAR     degre_sensibilite
+        VARCHAR     statut
+        INTEGER     demandeur_id FK
+        INTEGER     juriste_id FK
+        TEXT        avis_juridique
+        TEXT        commentaire_complement
+        TEXT        motif_rejet
+        VARCHAR     piece_jointe_nom
+        VARCHAR     piece_jointe_path
+        VARCHAR     piece_jointe_type
+        INTEGER     piece_jointe_taille
+        TIMESTAMPTZ date_creation
+        TIMESTAMPTZ date_soumission
+        TIMESTAMPTZ date_traitement
+    }
+    notifications {
+        SERIAL      id PK
+        INTEGER     user_id FK
+        INTEGER     demande_id FK
+        VARCHAR     message
+        BOOLEAN     lue
+        TIMESTAMPTZ created_at
+    }
+    historique_statuts {
+        SERIAL      id PK
+        INTEGER     demande_id FK
+        INTEGER     user_id FK
+        VARCHAR     ancien_statut
+        VARCHAR     nouveau_statut
+        TEXT        commentaire
+        TIMESTAMPTZ created_at
+    }
+    commentaires {
+        SERIAL      id PK
+        INTEGER     demande_id FK
+        INTEGER     auteur_id FK
+        TEXT        contenu
+        TIMESTAMPTZ created_at
+    }
+```
+
+### Passage du MCD au MLD (règles appliquées)
+
+| Élément MCD | Devient dans le MLD |
+|---|---|
+| Entité UTILISATEUR | Table `users` |
+| Entité DEMANDE | Table `demande_avis` |
+| Entités HISTORIQUE / NOTIFICATION / COMMENTAIRE | Tables `historique_statuts` / `notifications` / `commentaires` |
+| Association *Initier* (1,1 côté demande) | FK `demande_avis.demandeur_id → users.id` (NOT NULL) |
+| Association *Traiter* (0,1 côté demande) | FK `demande_avis.juriste_id → users.id` (nullable) |
+| Associations *Subir* / *Effectuer* | FK `historique_statuts.demande_id` / `.user_id` |
+| Associations *Recevoir* / *Concerner* | FK `notifications.user_id` / `.demande_id` (nullable) |
+| Associations *Porter* / *Rédiger* | FK `commentaires.demande_id` / `.auteur_id` |
+| Propriété `email` (identifiant secondaire) | Contrainte `UNIQUE` (UK) |
+
+> **PK** = clé primaire · **FK** = clé étrangère · **UK** = clé unique.
+
+### Vue synthétique (schéma texte)
+
+```
+users (1) ──< initie  >── (N) demande_avis        [demandeur_id, obligatoire]
+users (1) ──< traite  >── (N) demande_avis        [juriste_id, nullable]
+demande_avis (1) ──< >── (N) historique_statuts   [demande_id]   |  users (1) ──< (N)
+demande_avis (1) ──< >── (N) notifications         [demande_id, nullable]  |  users (1) ──< (N)
+demande_avis (1) ──< >── (N) commentaires          [demande_id]   |  users (1) ──< (N)
+```
+
+---
+
+## 4. Dictionnaire de données
+
+### 4.1 Table `users`
 
 | Colonne | Type | Null | Défaut | Contrainte | Description |
 |---|---|---|---|---|---|
@@ -96,13 +234,13 @@ gravitent autour d'elle et autour de `users`.
 
 **Qui écrit quoi** : l'inscription est réservée à l'ADMIN (pas d'auto-inscription). `password_hash` est mis à jour via le endpoint de changement de mot de passe.
 
-### 3.2 Table `demande_avis`
+### 4.2 Table `demande_avis`
 
 | Colonne | Type | Null | Défaut | Contrainte | Description |
 |---|---|---|---|---|---|
 | `id` | SERIAL | NON | auto | PK | Identifiant |
 | `titre` | VARCHAR(250) | NON | — | — | Titre court de la demande |
-| `theme` | VARCHAR(100) | NON | — | — | Thème juridique (voir §5.1) |
+| `theme` | VARCHAR(100) | NON | — | — | Thème juridique (voir §6.1) |
 | `description` | TEXT | NON | — | — | Exposé de la problématique |
 | `degre_sensibilite` | VARCHAR(50) | NON | — | CHECK ∈ {Faible, Moyen, Confidentiel} | Calculé auto selon le thème |
 | `statut` | VARCHAR(50) | NON | `'Brouillon'` | CHECK (7 valeurs) | Position dans le workflow |
@@ -121,7 +259,7 @@ gravitent autour d'elle et autour de `users`.
 
 **Qui écrit `statut`** : uniquement le service `workflow` (voir [WORKFLOW.md](WORKFLOW.md)), jamais un UPDATE direct.
 
-### 3.3 Table `notifications`
+### 4.3 Table `notifications`
 
 | Colonne | Type | Null | Défaut | Contrainte | Description |
 |---|---|---|---|---|---|
@@ -132,7 +270,7 @@ gravitent autour d'elle et autour de `users`.
 | `lue` | BOOLEAN | NON | `FALSE` | — | Statut de lecture |
 | `created_at` | TIMESTAMPTZ | NON | `NOW()` | — | Date d'émission |
 
-### 3.4 Table `historique_statuts` (immuable)
+### 4.4 Table `historique_statuts` (immuable)
 
 | Colonne | Type | Null | Défaut | Contrainte | Description |
 |---|---|---|---|---|---|
@@ -146,7 +284,7 @@ gravitent autour d'elle et autour de `users`.
 
 **Immuabilité** : INSERT uniquement. Aucune route ne fait UPDATE ni DELETE sur cette table.
 
-### 3.5 Table `commentaires` (optionnelle — OPT01)
+### 4.5 Table `commentaires` (optionnelle — OPT01)
 
 | Colonne | Type | Null | Défaut | Contrainte | Description |
 |---|---|---|---|---|---|
@@ -158,7 +296,7 @@ gravitent autour d'elle et autour de `users`.
 
 ---
 
-## 4. Décisions de conception
+## 5. Décisions de conception
 
 | # | Décision | Choix retenu | Justification |
 |---|---|---|---|
@@ -175,9 +313,9 @@ plutôt qu'une table dédiée. Choix assumé : le besoin est d'**une** pièce pa
 
 ---
 
-## 5. Règles métier portées par la base
+## 6. Règles métier portées par la base
 
-### 5.1 Calcul automatique du degré de sensibilité
+### 6.1 Calcul automatique du degré de sensibilité
 
 Le degré est déterminé côté serveur à partir du thème, **avant** l'INSERT. Table de correspondance :
 
@@ -191,14 +329,14 @@ Le degré est déterminé côté serveur à partir du thème, **avant** l'INSERT
 
 Le demandeur peut ensuite ajuster manuellement le degré proposé (le CHECK garantit une valeur valide).
 
-### 5.2 Intégrité du workflow
+### 6.2 Intégrité du workflow
 
 La colonne `statut` est contrainte par CHECK aux 7 valeurs légales, mais **l'enchaînement**
 des statuts (quelle transition est permise depuis quel statut) est géré par le service applicatif,
 pas par la base — voir [WORKFLOW.md](WORKFLOW.md). La base garantit la *validité* d'un statut,
 l'application garantit la *légalité* d'une transition.
 
-### 5.3 Cohérence transactionnelle
+### 6.3 Cohérence transactionnelle
 
 Toute transition écrit dans **3 tables** (`demande_avis`, `historique_statuts`, `notifications`)
 au sein d'une **transaction unique**. En cas d'échec d'une écriture, l'ensemble est annulé (ROLLBACK) :
@@ -211,3 +349,4 @@ jamais d'historique sans changement de statut, ni l'inverse.
 | Date | Version | Modification |
 |---|---|---|
 | 17/07/2026 | 1.0 | Création — dictionnaire complet, 6 décisions, MLD |
+| 19/07/2026 | 1.1 | Ajout du MCD (Merise) + MLD en diagrammes Mermaid, cardinalités et règles de passage |
