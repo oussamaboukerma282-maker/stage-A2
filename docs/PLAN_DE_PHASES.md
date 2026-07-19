@@ -551,8 +551,39 @@ PostgreSQL (non installé en P0). À valider dès la mise en place de l'environn
 
 **→ Décision : passage en P1 (Fondations techniques) autorisé.**
 
-### Bilan P1 – Fondations
-*(à venir)*
+### Bilan P1 – Fondations ✅ Terminée (19/07/2026)
+
+**Environnement**
+- Node v24, npm 11, Git 2.52 vérifiés.
+- **PostgreSQL 17** installé via winget (service `postgresql-x64-17` en marche, démarrage automatique).
+- Base `avis_juridiques` créée.
+
+**Base de données**
+- `schema.sql` exécuté **2× de suite sans erreur** → idempotence confirmée
+  (point resté ouvert en P0, désormais **levé**).
+- `seed.sql` chargé. Contrôles : 6 users, 15 demandes (répartition 2/3/3/2/3/1/1 par statut),
+  28 lignes d'historique, 15 notifications, accents corrects.
+
+**Backend**
+- Squelette Express 5 en couches (config, helpers, middleware, routes) conforme aux conventions.
+- `GET /api/health` : renvoie `{ success:true, data:{ status:"ok", db:"connected", time } }` (HTTP 200).
+- Sans base : renvoie une **erreur 500 propre** (gestion d'erreurs centralisée prouvée).
+
+**Frontend**
+- React 18 + Vite 5 + Tailwind 3 : `npm run build` OK (84 modules, CSS Tailwind généré).
+- Instance Axios centralisée ; page de test « API connectée ✓ ».
+- Serveur de dev Vite sur `:3000` + **proxy `/api → :5000` fonctionnel** (testé HTTP 200).
+
+**Intégration & doc**
+- `package.json` racine : `npm run dev` (concurrently), `npm run db:reset`, `install:all`.
+- README d'installation complet. `.gitignore` durci (`.env`, `node_modules`, uploads).
+
+**Chaîne end-to-end validée** : Vite (:3000) → proxy → Express (:5000) → pg → PostgreSQL 17.
+
+**Note** : shadcn/ui reporté à P2 (au moment de construire la vraie UI) ; Tailwind seul en P1,
+solution de repli documentée.
+
+**→ Décision : passage en P2 (Authentification & Sécurité) autorisé.**
 
 ### Bilan P2 – Authentification
 *(à venir)*
