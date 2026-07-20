@@ -1,41 +1,42 @@
-// Page de test de la Phase 1 : vérifie la chaîne React -> API -> PostgreSQL.
-// Sera remplacée par le routeur applicatif en Phase 2.
+// Routeur applicatif (remplace la page de test de la Phase 1).
+// Structure de navigation sécurisée : les pages métier (Demandes, Utilisateurs)
+// sont des placeholders remplis dans les phases P3 et P5.
 
-import { useEffect, useState } from 'react';
-import api from './api/axios';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Accueil from './pages/Accueil';
+import Profil from './pages/Profil';
+import Placeholder from './pages/Placeholder';
+import NotFound from './pages/NotFound';
+
+// Enveloppe une page dans le Layout + la protection de route
+const Page = ({ children, roles }) => (
+  <ProtectedRoute roles={roles}>
+    <Layout>{children}</Layout>
+  </ProtectedRoute>
+);
 
 export default function App() {
-  const [health, setHealth] = useState(null);
-  const [erreur, setErreur] = useState(null);
-
-  useEffect(() => {
-    api.get('/health')
-      .then(res => setHealth(res.data.data))
-      .catch(() => setErreur('API injoignable'));
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-      <h1 className="text-3xl font-bold text-primaire">Avis Juridiques — Natixis DAJ</h1>
-      <p className="text-sm text-gray-500">Phase 1 — Fondations techniques</p>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-      {erreur && (
-        <p className="text-red-600 font-semibold">✗ {erreur}</p>
-      )}
+          <Route path="/" element={<Page><Accueil /></Page>} />
+          <Route path="/demandes" element={<Page><Placeholder titre="Demandes" phase="Phase 3" /></Page>} />
+          <Route path="/profil" element={<Page><Profil /></Page>} />
+          <Route
+            path="/utilisateurs"
+            element={<Page roles={['ADMIN']}><Placeholder titre="Gestion des utilisateurs" phase="Phase 5" /></Page>}
+          />
 
-      {health && (
-        <div className="text-center">
-          <p className="text-2xl font-bold text-green-700">API connectée ✓</p>
-          <p className="text-gray-600">
-            Base : {health.db} — Heure serveur :{' '}
-            {new Date(health.time).toLocaleString('fr-FR')}
-          </p>
-        </div>
-      )}
-
-      {!health && !erreur && (
-        <p className="text-gray-400">Connexion à l'API…</p>
-      )}
-    </div>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

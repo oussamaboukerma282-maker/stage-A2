@@ -585,8 +585,44 @@ solution de repli documentée.
 
 **→ Décision : passage en P2 (Authentification & Sécurité) autorisé.**
 
-### Bilan P2 – Authentification
-*(à venir)*
+### Bilan P2 – Authentification ✅ Terminée (21/07/2026)
+
+**Livrables produits :**
+
+| Domaine | Fichiers | État |
+|---|---|---|
+| Auth backend | `models/usersModel.js`, `controllers/authController.js`, `routes/auth.js` | ✅ |
+| Sécurité | `middleware/auth.js`, `middleware/roles.js`, `middleware/validate.js`, `utils/jwt.js`, `utils/AppError.js` | ✅ |
+| Auth frontend | `context/AuthContext.jsx`, `api/axios.js` (intercepteurs), `components/ProtectedRoute.jsx`, `components/Layout.jsx` | ✅ |
+| Pages | `pages/Login.jsx`, `pages/Accueil.jsx`, `pages/Profil.jsx`, `pages/Placeholder.jsx`, `pages/NotFound.jsx`, `App.jsx` (routeur) | ✅ |
+
+**Tests de sécurité (validés) :**
+
+| # | Test | Résultat |
+|---|---|---|
+| S1 | Connexion des comptes de démo | ✅ 200 + token |
+| S2 | Mauvais mot de passe | ✅ 401 « Identifiants invalides » (générique) |
+| S3 | Email inexistant | ✅ 401 même message (anti-énumération) |
+| S4 | Token bidon / invalide | ✅ 401 |
+| S5 | Route protégée sans token | ✅ 401 |
+| S6 | DEMANDEUR → route ADMIN | ✅ 403 |
+| S7 | Injection SQL dans email | ✅ 400 (aucun 500, requêtes paramétrées) |
+| S8 | `me` ne renvoie jamais `password_hash` | ✅ confirmé |
+| S9 | F5 / rechargement complet | ✅ reste connecté (réhydratation `/auth/me`) |
+| S10 | Déconnexion puis accès page protégée | ✅ redirection `/login` |
+
+**Tests navigateur (bout en bout) :** login juriste → accueil, navbar conditionnée au rôle
+(pas de lien « Utilisateurs » pour un juriste), guard `/utilisateurs` → redirection,
+page Profil affichée, déconnexion → login. **Tous OK.**
+
+**Changement de mot de passe (EF21) :** validé (change → 200, ancien → 401, nouveau → 200),
+puis **seed restauré** (`Demo2026!` rétabli pour tous les comptes).
+
+**Écart au plan :** shadcn/ui non initialisé — **repli Tailwind** appliqué (documenté dans le plan
+P2 §5.1 et CONVENTIONS). Composants Tailwind propres avec la palette du projet. shadcn pourra
+être ajouté plus tard sans refonte. Route de test temporaire `admin-test` supprimée en fin de phase.
+
+**→ Décision : passage en P3 (Cœur métier : les demandes) autorisé.**
 
 ### Bilan P3 – Demandes
 *(à venir)*
