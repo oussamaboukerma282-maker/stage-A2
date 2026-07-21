@@ -13,8 +13,8 @@ app.use(express.json());
 // Routes
 app.use('/api/health', require('./routes/health'));
 app.use('/api/auth', require('./routes/auth'));
-// Les routes métier (demandes, users, notifications, stats)
-// seront montées ici au fil des phases P3 à P5.
+app.use('/api/demandes', require('./routes/demandes'));
+// Les routes restantes (users, notifications, stats) seront montées ici en P5.
 
 // Gestion d'erreurs centralisée (toujours en dernier)
 app.use(require('./middleware/errorHandler'));

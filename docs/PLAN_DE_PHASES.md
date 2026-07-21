@@ -624,8 +624,42 @@ P2 §5.1 et CONVENTIONS). Composants Tailwind propres avec la palette du projet.
 
 **→ Décision : passage en P3 (Cœur métier : les demandes) autorisé.**
 
-### Bilan P3 – Demandes
-*(à venir)*
+### Bilan P3 – Demandes ✅ Terminée (21/07/2026)
+
+**Livrables produits :**
+
+| Domaine | Fichiers | État |
+|---|---|---|
+| Règle métier | `config/themes.js` (thème → sensibilité) | ✅ |
+| Accès données | `models/demandesModel.js` (visibilité par rôle en SQL) | ✅ |
+| Logique | `controllers/demandesController.js` | ✅ |
+| Routes | `routes/demandes.js` (8 endpoints) | ✅ |
+| Upload | `middleware/upload.js` (Multer, UUID, 10 Mo, MIME+extension) | ✅ |
+| Composants | `StatutBadge.jsx`, `FileUpload.jsx` | ✅ |
+| Pages | `Demandes.jsx`, `NouvelleDemande.jsx`, `DemandeDetail.jsx` | ✅ |
+
+**Tests validés :**
+
+| Famille | Résultats |
+|---|---|
+| **Cloisonnement** | C2 (lecture demande d'autrui) → 403 · C3 (juriste ↔ brouillon) → 403 · C4 (téléchargement PJ d'autrui) → 403 · C5 (modification d'autrui) → 403 · propriétaire → 200 |
+| **Visibilité** | Juriste : 13/15 (aucun brouillon) · Demandeur1 : 6 · Demandeur2 : 5 |
+| **Sensibilité** | Les **5 thèmes** donnent le bon degré (accents inclus) |
+| **Règles métier** | M2 modif. d'une Soumise → 409 · M3 re-soumission → 409 · M4 description courte → 400 · M5 juriste crée → 403 · thème invalide → 400 |
+| **Fichiers** | F1 PDF → 201 · F2 15 Mo → `FILE_TOO_LARGE` · F3 `.exe` → `FILE_TYPE` · F4 remplacement supprime l'ancien · F5 suppression vide disque + colonnes |
+| **Navigateur** | Création + sensibilité auto (Confidentiel) + soumission → visible chez le juriste avec colonne « Demandeur » ; filtres, pagination, badges colorés OK |
+
+**Dette assumée (à traiter en P4)** : la soumission (T1) écrit directement `statut='Soumise'`
+**sans historique ni notification**. Première tâche de P4 : la refactorer via le moteur de
+transitions (transaction : UPDATE + historique + notification).
+
+**Notes techniques** : deux faux positifs rencontrés pendant les tests, tous deux dus à
+l'environnement de test et non au code — (1) accents mangés par l'interpolation shell dans curl
+(résolu en passant le JSON par fichier UTF-8), (2) `curl -F` cassé par la conversion de chemin
+MSYS (résolu avec `MSYS_NO_PATHCONV=1`). Le seed doit être lancé avec `ON_ERROR_STOP=1` et son
+code retour vérifié, sans masquer la sortie.
+
+**→ Décision : passage en P4 (Workflow & Traçabilité) autorisé.**
 
 ### Bilan P4 – Workflow
 *(à venir)*

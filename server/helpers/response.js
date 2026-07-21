@@ -4,8 +4,12 @@
 const ok = (res, data, code = 200) =>
   res.status(code).json({ success: true, data });
 
+/** Réponse paginée : { success: true, data: [...], pagination: {...} } */
+const okPaginated = (res, data, pagination) =>
+  res.status(200).json({ success: true, data, pagination });
+
 /** Réponse d'erreur : { success: false, error: { code, message } } */
 const fail = (res, code, errorCode, message) =>
   res.status(code).json({ success: false, error: { code: errorCode, message } });
 
-module.exports = { ok, fail };
+module.exports = { ok, okPaginated, fail };

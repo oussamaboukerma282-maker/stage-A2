@@ -9,6 +9,9 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Accueil from './pages/Accueil';
 import Profil from './pages/Profil';
+import Demandes from './pages/Demandes';
+import NouvelleDemande from './pages/NouvelleDemande';
+import DemandeDetail from './pages/DemandeDetail';
 import Placeholder from './pages/Placeholder';
 import NotFound from './pages/NotFound';
 
@@ -27,7 +30,12 @@ export default function App() {
           <Route path="/login" element={<Login />} />
 
           <Route path="/" element={<Page><Accueil /></Page>} />
-          <Route path="/demandes" element={<Page><Placeholder titre="Demandes" phase="Phase 3" /></Page>} />
+          <Route path="/demandes" element={<Page><Demandes /></Page>} />
+          <Route
+            path="/demandes/nouvelle"
+            element={<Page roles={['DEMANDEUR']}><NouvelleDemande /></Page>}
+          />
+          <Route path="/demandes/:id" element={<Page><DemandeDetail /></Page>} />
           <Route path="/profil" element={<Page><Profil /></Page>} />
           <Route
             path="/utilisateurs"
