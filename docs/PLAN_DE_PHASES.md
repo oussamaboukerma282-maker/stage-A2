@@ -661,8 +661,43 @@ code retour vérifié, sans masquer la sortie.
 
 **→ Décision : passage en P4 (Workflow & Traçabilité) autorisé.**
 
-### Bilan P4 – Workflow
-*(à venir)*
+### Bilan P4 – Workflow ✅ Terminée (21/07/2026)
+
+**Livrables produits :**
+
+| Domaine | Fichiers | État |
+|---|---|---|
+| **Moteur** | `services/workflow.js` (matrice + `executerTransition` transactionnel) | ✅ |
+| Traçabilité | `models/historiqueModel.js` (INSERT/SELECT uniquement) | ✅ |
+| Notifications | `models/notificationsModel.js` (écriture) | ✅ |
+| Endpoints | 8 transitions (T1→T8) + `GET /:id/historique` | ✅ |
+| Composants | `ConfirmDialog.jsx`, `Timeline.jsx` | ✅ |
+| Pages | `DemandeDetail.jsx` (actions contextuelles), `ModifierDemande.jsx` | ✅ |
+
+**Dette P3 remboursée** : `soumettre` passe désormais par le moteur — vérifié, une soumission
+crée 1 ligne d'historique et **3 notifications** (2 juristes + 1 admin, destinataires contrôlés).
+La fonction `demandesModel.soumettre` (UPDATE direct de statut) a été **supprimée**.
+
+**Tests validés :**
+
+| Famille | Résultats |
+|---|---|
+| **4 parcours** | Nominal (Brouillon→Soumise→En cours→Validée) · Complément (5 étapes) · Rejet · Annulation — tous OK avec historique complet et ordonné |
+| **Transitions interdites (R1-R7)** | 409 sur : saut d'étape, réouverture d'une Validée/Rejetée/Annulée, double soumission |
+| **Refus de rôle (R8-R11)** | 403 sur : demandeur qui valide/prend en charge, juriste qui soumet, non-propriétaire qui annule |
+| **Validation données (R12-R15)** | 400 sur : valider sans avis, rejeter sans motif, complément vide ou < 10 caractères |
+| **Verrouillage terminal (R16-R19)** | 409 sur les 5 routes d'écriture testées avec **le vrai propriétaire** d'une demande clôturée |
+| **Concurrence (R20)** | 2 prises en charge simultanées → 1×200 + 1×409, **un seul** `juriste_id`, **une seule** ligne d'historique (verrou `FOR UPDATE`) |
+| **Intégrité base** | 4 requêtes de contrôle → **0** (clôturées sans date, En cours sans juriste, statut ≠ dernier historique, brouillon avec historique) |
+| **Navigateur** | Prise en charge → actions contextuelles mises à jour → modale de validation (bouton désactivé sous 10 caractères) → Validée, section Actions disparue |
+
+**Défaut corrigé au passage** : `schema.sql` et `seed.sql` échouaient silencieusement selon le
+contexte d'exécution — psql sous Windows déduit son encodage client du codepage de la console,
+et les accents cassaient la contrainte `ck_demande_statut` (base à moitié peuplée, exit 3).
+**Corrigé** par `SET client_encoding = 'UTF8';` en tête des deux scripts. `npm run db:reset`
+est désormais fiable quel que soit le mode d'appel.
+
+**→ Décision : passage en P5 (Notifications & Tableaux de bord) autorisé.**
 
 ### Bilan P5 – Dashboards
 *(à venir)*

@@ -12,8 +12,13 @@
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- 0. Réinitialisation (ordre inverse des dépendances)
+-- 0. Encodage + Réinitialisation (ordre inverse des dépendances)
 -- -----------------------------------------------------------------------------
+-- Ce fichier contient des accents (contraintes CHECK sur les statuts). Sous
+-- Windows, psql déduit son encodage client du codepage de la console : on le
+-- force ici pour que le script soit fiable quel que soit le mode d'appel.
+SET client_encoding = 'UTF8';
+
 DROP TABLE IF EXISTS commentaires        CASCADE;
 DROP TABLE IF EXISTS historique_statuts  CASCADE;
 DROP TABLE IF EXISTS notifications       CASCADE;

@@ -12,6 +12,13 @@
 --  (hash bcrypt, salt factor 12)
 -- =============================================================================
 
+-- IMPORTANT : ce fichier est encodé en UTF-8 et contient des accents (statuts,
+-- thèmes, textes). Sous Windows, psql déduit son encodage client du codepage de
+-- la console, qui change selon que la sortie est redirigée ou non — les accents
+-- sont alors mal interprétés et violent les contraintes CHECK.
+-- Cette ligne force l'encodage et rend le script fiable quel que soit l'appelant.
+SET client_encoding = 'UTF8';
+
 -- Nettoyage des données (conserve la structure)
 TRUNCATE TABLE commentaires, historique_statuts, notifications, demande_avis, users
     RESTART IDENTITY CASCADE;

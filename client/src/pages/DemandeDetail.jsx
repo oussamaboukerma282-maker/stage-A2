@@ -1,10 +1,16 @@
-// Détail d'une demande — LECTURE (Phase 3).
-// Les actions de traitement et le journal d'activité arrivent en Phase 4.
+// Détail d'une demande : consultation, actions contextuelles (Phase 4)
+// et journal d'activité.
+//
+// Les boutons affichés dépendent du couple (rôle, statut) — cf. ECRANS.md §3.
+// Rappel : ceci ne fait que MASQUER des boutons ; l'autorisation réelle est
+// vérifiée par le serveur (services/workflow.js).
 
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import StatutBadge from '../components/StatutBadge';
+import Timeline from '../components/Timeline';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { formaterTaille } from '../components/FileUpload';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,19 +33,45 @@ export default function DemandeDetail() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [demande, setDemande] = useState(null);
+  const [historique, setHistorique] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [action, setAction] = useState(null);
+  const [dialog, setDialog] = useState(null); // 'valider' | 'rejeter' | 'complement' | null
 
   const charger = () => {
     setChargement(true);
-    api.get(`/demandes/${id}`)
-      .then((res) => { setDemande(res.data.data); setErreur(null); })
+    Promise.all([
+      api.get(`/demandes/${id}`),
+      api.get(`/demandes/${id}/historique`).catch(() => ({ data: { data: [] } }))
+    ])
+      .then(([resD, resH]) => {
+        setDemande(resD.data.data);
+        setHistorique(resH.data.data);
+        setErreur(null);
+      })
       .catch((err) => setErreur(err.response?.data?.error?.message || 'Demande introuvable.'))
       .finally(() => setChargement(false));
   };
 
   useEffect(charger, [id]);
+
+  /** Exécute une transition puis recharge la demande et son historique. */
+  const transition = async (chemin, corps) => {
+    setAction(null);
+    await api.post(`/demandes/${id}/${chemin}`, corps);
+    setDialog(null);
+    charger();
+  };
+
+  /** Variante pour les actions sans modale (erreur affichée en haut de page). */
+  const transitionSimple = async (chemin) => {
+    try {
+      await transition(chemin);
+    } catch (err) {
+      setAction(err.response?.data?.error?.message || "L'action a échoué.");
+    }
+  };
 
   const telecharger = async () => {
     try {
@@ -55,15 +87,6 @@ export default function DemandeDetail() {
     }
   };
 
-  const soumettre = async () => {
-    try {
-      await api.post(`/demandes/${id}/soumettre`);
-      charger();
-    } catch (err) {
-      setAction(err.response?.data?.error?.message || 'Erreur lors de la soumission.');
-    }
-  };
-
   if (chargement) return <p className="text-gray-400">Chargement…</p>;
 
   if (erreur) {
@@ -76,7 +99,53 @@ export default function DemandeDetail() {
   }
 
   const estProprietaire = demande.demandeur_id === user?.id;
+  const estJuriste = user?.role === 'JURISTE' || user?.role === 'ADMIN';
   const modifiable = estProprietaire && STATUTS_MODIFIABLES.includes(demande.statut);
+
+  // Tableau (rôle × statut) de ECRANS.md §3, traduit en boutons.
+  const BTN = {
+    principal: 'bg-primaire text-white hover:bg-primaire/90',
+    secondaire: 'border border-primaire text-primaire hover:bg-purple-50',
+    vert: 'bg-green-700 text-white hover:bg-green-800',
+    rouge: 'bg-red-700 text-white hover:bg-red-800',
+    neutre: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+  };
+
+  const actionsDisponibles = [];
+  if (estProprietaire && demande.statut === 'Brouillon') {
+    actionsDisponibles.push(
+      { cle: 'modifier', libelle: 'Modifier', classe: BTN.secondaire,
+        onClick: () => navigate(`/demandes/${id}/modifier`) },
+      { cle: 'soumettre', libelle: 'Soumettre la demande', classe: BTN.principal,
+        onClick: () => transitionSimple('soumettre') },
+      { cle: 'annuler', libelle: 'Annuler', classe: BTN.neutre,
+        onClick: () => transitionSimple('annuler') }
+    );
+  }
+  if (estProprietaire && demande.statut === 'Complément demandé') {
+    actionsDisponibles.push(
+      { cle: 'modifier', libelle: 'Modifier', classe: BTN.secondaire,
+        onClick: () => navigate(`/demandes/${id}/modifier`) },
+      { cle: 'completer', libelle: 'Compléter et renvoyer', classe: BTN.principal,
+        onClick: () => transitionSimple('completer') }
+    );
+  }
+  if (estJuriste && demande.statut === 'Soumise') {
+    actionsDisponibles.push(
+      { cle: 'prise', libelle: 'Prendre en charge', classe: BTN.principal,
+        onClick: () => transitionSimple('prendre-en-charge') }
+    );
+  }
+  if (estJuriste && demande.statut === 'En cours') {
+    actionsDisponibles.push(
+      { cle: 'complement', libelle: 'Demander un complément', classe: BTN.secondaire,
+        onClick: () => setDialog('complement') },
+      { cle: 'valider', libelle: 'Valider', classe: BTN.vert,
+        onClick: () => setDialog('valider') },
+      { cle: 'rejeter', libelle: 'Rejeter', classe: BTN.rouge,
+        onClick: () => setDialog('rejeter') }
+    );
+  }
 
   return (
     <div className="max-w-3xl">
@@ -155,26 +224,62 @@ export default function DemandeDetail() {
         )}
       </div>
 
-      {/* Actions du demandeur propriétaire */}
-      {modifiable && (
+      {/* Actions contextuelles — dépendent du couple (rôle, statut) */}
+      {actionsDisponibles.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6 mb-4">
           <h2 className="font-semibold text-gray-700 mb-3">Actions</h2>
           <div className="flex flex-wrap gap-3">
-            {demande.statut === 'Brouillon' && (
-              <button onClick={soumettre}
-                className="bg-primaire text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-primaire/90 transition">
-                Soumettre la demande
+            {actionsDisponibles.map((a) => (
+              <button key={a.cle} onClick={a.onClick} className={`rounded-md px-4 py-2 text-sm font-medium transition ${a.classe}`}>
+                {a.libelle}
               </button>
-            )}
+            ))}
           </div>
         </div>
       )}
 
-      {/* Emplacements réservés à la Phase 4 */}
-      <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-400 text-sm">
-        Les actions de traitement (prise en charge, validation, rejet, complément)
-        et le journal d'activité seront disponibles en Phase 4.
+      {/* Journal d'activité */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="font-semibold text-gray-700 mb-4">Journal d'activité</h2>
+        <Timeline evenements={historique} />
       </div>
+
+      {/* Modales de confirmation */}
+      {dialog === 'complement' && (
+        <ConfirmDialog
+          titre="Demander un complément"
+          message="Précisez au demandeur les éléments manquants. La demande lui sera renvoyée."
+          labelChamp="Commentaire"
+          placeholder="Merci de joindre…"
+          libelleConfirmer="Demander le complément"
+          onConfirm={(texte) => transition('complement', { commentaire: texte })}
+          onCancel={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'valider' && (
+        <ConfirmDialog
+          titre="Valider la demande"
+          message="Rédigez l'avis juridique. Cette action clôture définitivement la demande."
+          labelChamp="Avis juridique"
+          placeholder="Avis favorable…"
+          libelleConfirmer="Valider"
+          couleur="vert"
+          onConfirm={(texte) => transition('valider', { avis_juridique: texte })}
+          onCancel={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'rejeter' && (
+        <ConfirmDialog
+          titre="Rejeter la demande"
+          message="Indiquez le motif du rejet. Cette action clôture définitivement la demande."
+          labelChamp="Motif du rejet"
+          placeholder="Dossier incomplet…"
+          libelleConfirmer="Rejeter"
+          couleur="rouge"
+          onConfirm={(texte) => transition('rejeter', { motif_rejet: texte })}
+          onCancel={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }

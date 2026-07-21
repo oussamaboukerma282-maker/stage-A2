@@ -48,8 +48,38 @@ router.put(
   ctrl.modifier
 );
 
-// Soumission (transition T1 — sera refactorée en P4 via le moteur de transitions)
-router.post('/:id/soumettre', roles('DEMANDEUR'), idValide, validate, ctrl.soumettre);
+// ---------------------------------------------------------------------------
+// TRANSITIONS (T1 → T8) — la matrice, les rôles et la propriété sont vérifiés
+// par le moteur (services/workflow.js). Les routes ne font que valider la forme.
+// ---------------------------------------------------------------------------
+router.post('/:id/soumettre',         idValide, validate, ctrl.soumettre);          // T1
+router.post('/:id/annuler',           idValide, validate, ctrl.annuler);            // T2
+router.post('/:id/prendre-en-charge', idValide, validate, ctrl.prendreEnCharge);    // T3
+
+router.post('/:id/complement',                                                       // T4
+  [idValide, body('commentaire').trim().isLength({ min: 10, max: 2000 })
+    .withMessage('Le commentaire doit contenir entre 10 et 2000 caractères')],
+  validate, ctrl.demanderComplement);
+
+router.post('/:id/completer',         idValide, validate, ctrl.completer);          // T5
+
+router.post('/:id/valider',                                                          // T6
+  [idValide, body('avis_juridique').trim().isLength({ min: 10, max: 5000 })
+    .withMessage("L'avis juridique doit contenir entre 10 et 5000 caractères")],
+  validate, ctrl.valider);
+
+router.post('/:id/rejeter',                                                          // T7
+  [idValide, body('motif_rejet').trim().isLength({ min: 10, max: 2000 })
+    .withMessage('Le motif de rejet doit contenir entre 10 et 2000 caractères')],
+  validate, ctrl.rejeter);
+
+router.put('/:id/theme',                                                             // T8
+  roles('JURISTE', 'ADMIN'),
+  [idValide, body('theme').isIn(listeThemes()).withMessage('Thème invalide')],
+  validate, ctrl.modifierTheme);
+
+// Journal d'activité
+router.get('/:id/historique', idValide, validate, ctrl.historique);
 
 // Pièces jointes
 router.post('/:id/piece-jointe', roles('DEMANDEUR'), uploadPieceJointe, ctrl.uploaderPieceJointe);

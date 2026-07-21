@@ -3,6 +3,8 @@
 const path = require('path');
 const fs = require('fs');
 const demandesModel = require('../models/demandesModel');
+const historiqueModel = require('../models/historiqueModel');
+const workflow = require('../services/workflow');
 const { sensibilitePourTheme, sensibiliteValide } = require('../config/themes');
 const { AppError, asyncHandler } = require('../utils/AppError');
 const { ok, okPaginated } = require('../helpers/response');
@@ -99,22 +101,80 @@ const modifier = asyncHandler(async (req, res) => {
   ok(res, maj);
 });
 
-// POST /api/demandes/:id/soumettre  (transition T1 — version simple, cf. plan P3 §4.4)
+// ---------------------------------------------------------------------------
+// TRANSITIONS DE STATUT — toutes délèguent au moteur (services/workflow.js).
+// Aucun UPDATE de `statut` n'est fait ici : c'est la garantie d'atomicité
+// (demande + historique + notifications dans une seule transaction).
+// ---------------------------------------------------------------------------
+
+// POST /api/demandes/:id/soumettre           (T1)
 const soumettre = asyncHandler(async (req, res) => {
-  const demande = await chargerDemande(req.params.id);
-
-  if (demande.demandeur_id !== req.user.id) {
-    throw new AppError(403, 'FORBIDDEN', 'Seul le demandeur peut soumettre cette demande');
-  }
-  if (demande.statut !== 'Brouillon') {
-    throw new AppError(409, 'INVALID_TRANSITION', 'Seul un brouillon peut être soumis');
-  }
-  if (!demande.titre || !demande.theme || !demande.description) {
-    throw new AppError(400, 'VALIDATION', 'Titre, thème et description sont obligatoires');
-  }
-
-  const maj = await demandesModel.soumettre(req.params.id);
+  const maj = await workflow.executerTransition(req.params.id, 'Soumise', req.user);
   ok(res, maj);
+});
+
+// POST /api/demandes/:id/annuler             (T2)
+const annuler = asyncHandler(async (req, res) => {
+  const maj = await workflow.executerTransition(req.params.id, 'Annulée', req.user);
+  ok(res, maj);
+});
+
+// POST /api/demandes/:id/prendre-en-charge   (T3)
+const prendreEnCharge = asyncHandler(async (req, res) => {
+  const maj = await workflow.executerTransition(req.params.id, 'En cours', req.user);
+  ok(res, maj);
+});
+
+// POST /api/demandes/:id/complement          (T4)
+const demanderComplement = asyncHandler(async (req, res) => {
+  const maj = await workflow.executerTransition(req.params.id, 'Complément demandé', req.user, {
+    commentaire: req.body.commentaire
+  });
+  ok(res, maj);
+});
+
+// POST /api/demandes/:id/completer           (T5)
+const completer = asyncHandler(async (req, res) => {
+  const maj = await workflow.executerTransition(req.params.id, 'En cours', req.user);
+  ok(res, maj);
+});
+
+// POST /api/demandes/:id/valider             (T6)
+const valider = asyncHandler(async (req, res) => {
+  const maj = await workflow.executerTransition(req.params.id, 'Validée', req.user, {
+    avis_juridique: req.body.avis_juridique
+  });
+  ok(res, maj);
+});
+
+// POST /api/demandes/:id/rejeter             (T7)
+const rejeter = asyncHandler(async (req, res) => {
+  const maj = await workflow.executerTransition(req.params.id, 'Rejetée', req.user, {
+    motif_rejet: req.body.motif_rejet
+  });
+  ok(res, maj);
+});
+
+// PUT /api/demandes/:id/theme                (T8 — hors machine à états)
+const modifierTheme = asyncHandler(async (req, res) => {
+  const demande = await chargerDemande(req.params.id);
+  if (demande.statut !== 'En cours') {
+    throw new AppError(409, 'INVALID_TRANSITION',
+      'Le thème ne peut être modifié que sur une demande en cours de traitement');
+  }
+  const maj = await demandesModel.updateTheme(
+    req.params.id,
+    req.body.theme,
+    resoudreSensibilite(req.body.theme, null)
+  );
+  ok(res, maj);
+});
+
+// GET /api/demandes/:id/historique
+const historique = asyncHandler(async (req, res) => {
+  const demande = await chargerDemande(req.params.id);
+  verifierLecture(demande, req.user);
+  ok(res, await historiqueModel.listerParDemande(req.params.id));
 });
 
 // POST /api/demandes/:id/piece-jointe
@@ -184,7 +244,17 @@ module.exports = {
   detail,
   creer,
   modifier,
+  // Transitions
   soumettre,
+  annuler,
+  prendreEnCharge,
+  demanderComplement,
+  completer,
+  valider,
+  rejeter,
+  modifierTheme,
+  historique,
+  // Pièces jointes
   uploaderPieceJointe,
   telechargerPieceJointe,
   supprimerPieceJointe

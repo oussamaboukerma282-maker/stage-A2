@@ -104,17 +104,15 @@ const update = async (id, { titre, theme, description, degre_sensibilite }) => {
 };
 
 /**
- * Transition T1 : Brouillon -> Soumise (version simple de la Phase 3).
- * NOTE : l'historique et les notifications seront ajoutés en Phase 4,
- * lors du passage par le moteur de transitions (services/workflow.js).
+ * Modifie le thème et le degré de sensibilité recalculé (transition T8).
+ * NB : les changements de STATUT ne passent JAMAIS par ce modèle —
+ * ils sont l'affaire exclusive de services/workflow.js.
  */
-const soumettre = async (id) => {
+const updateTheme = async (id, theme, degre_sensibilite) => {
   const { rows } = await pool.query(
-    `UPDATE demande_avis
-        SET statut = 'Soumise', date_soumission = NOW()
-      WHERE id = $1
-      RETURNING *`,
-    [id]
+    `UPDATE demande_avis SET theme = $2, degre_sensibilite = $3
+      WHERE id = $1 RETURNING *`,
+    [id, theme, degre_sensibilite]
   );
   return rows[0];
 };
@@ -151,7 +149,7 @@ module.exports = {
   findById,
   create,
   update,
-  soumettre,
+  updateTheme,
   setPieceJointe,
   clearPieceJointe
 };

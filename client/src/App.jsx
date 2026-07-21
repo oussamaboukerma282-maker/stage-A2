@@ -11,6 +11,7 @@ import Accueil from './pages/Accueil';
 import Profil from './pages/Profil';
 import Demandes from './pages/Demandes';
 import NouvelleDemande from './pages/NouvelleDemande';
+import ModifierDemande from './pages/ModifierDemande';
 import DemandeDetail from './pages/DemandeDetail';
 import Placeholder from './pages/Placeholder';
 import NotFound from './pages/NotFound';
@@ -34,6 +35,10 @@ export default function App() {
           <Route
             path="/demandes/nouvelle"
             element={<Page roles={['DEMANDEUR']}><NouvelleDemande /></Page>}
+          />
+          <Route
+            path="/demandes/:id/modifier"
+            element={<Page roles={['DEMANDEUR']}><ModifierDemande /></Page>}
           />
           <Route path="/demandes/:id" element={<Page><DemandeDetail /></Page>} />
           <Route path="/profil" element={<Page><Profil /></Page>} />
