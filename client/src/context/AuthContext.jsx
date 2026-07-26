@@ -4,6 +4,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../api/axios';
+import { getToken, setToken, clearToken } from '../api/tokenStorage';
 
 const AuthContext = createContext(null);
 
@@ -13,27 +14,26 @@ export function AuthProvider({ children }) {
 
   // Au montage : si un token existe, on récupère le profil (réhydratation)
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!getToken()) {
       setChargement(false);
       return;
     }
     api.get('/auth/me')
       .then((res) => setUser(res.data.data))
-      .catch(() => localStorage.removeItem('token'))
+      .catch(() => clearToken())
       .finally(() => setChargement(false));
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, souvenir = true) => {
     const res = await api.post('/auth/login', { email, password });
     const { token, user: u } = res.data.data;
-    localStorage.setItem('token', token);
+    setToken(token, souvenir);
     setUser(u);
     return u;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    clearToken();
     setUser(null);
     window.location.href = '/login';
   };

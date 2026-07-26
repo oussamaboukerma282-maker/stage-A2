@@ -3,6 +3,7 @@
 // - Réponse : sur 401, purge la session et redirige vers /login.
 
 import axios from 'axios';
+import { getToken, clearToken } from './tokenStorage';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api'
@@ -10,7 +11,7 @@ const api = axios.create({
 
 // Intercepteur de requête : ajoute le token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,7 +26,7 @@ api.interceptors.response.use(
       // Évite une boucle si l'échec vient de la page de login elle-même
       const surLogin = window.location.pathname === '/login';
       if (!surLogin) {
-        localStorage.removeItem('token');
+        clearToken();
         window.location.href = '/login';
       }
     }
