@@ -699,8 +699,32 @@ est désormais fiable quel que soit le mode d'appel.
 
 **→ Décision : passage en P5 (Notifications & Tableaux de bord) autorisé.**
 
-### Bilan P5 – Dashboards
-*(à venir)*
+### Bilan P5 – Dashboards ✅ Terminée (26/07/2026)
+
+**Livrables produits :**
+
+| Domaine | Fichiers | État |
+|---|---|---|
+| Notifications | `models/notificationsModel.js` (lecture), `controllers/notificationsController.js`, `routes/notifications.js` | ✅ |
+| Statistiques | `models/statsModel.js`, `controllers/statsController.js`, `routes/stats.js` | ✅ |
+| Utilisateurs | `usersModel.js` (étendu), `controllers/usersController.js`, `routes/users.js` | ✅ |
+| Composants | `NotificationBell.jsx` (polling), `StatCard.jsx` | ✅ |
+| Dashboards | `dashboards/DashboardAdmin.jsx` (Chart.js), `DashboardJuriste.jsx`, `DashboardDemandeur.jsx` | ✅ |
+| Pages | `Accueil.jsx` (aiguillage par rôle), `Utilisateurs.jsx` (CRUD) | ✅ |
+
+**Tests validés :**
+
+| Famille | Résultats |
+|---|---|
+| **Notifications** | isolation N2 (marquer la notif d'autrui → 404) · tout-lu → 0 non-lues · badge exact · dropdown + clic marque lu **et** navigue vers la demande |
+| **Stats — rôles** | demandeur/juriste sur `/stats/admin` → 403 · `stats/demandeur` = ses 6 demandes · `stats/juriste` distingue « à traiter » (global) et « mes dossiers » |
+| **Stats — exactitude** | admin : 15 demandes, délai moyen 3,1 j, taux validation 75 % (3/4 clôturées), rejet 25 %, 8 en retard — **cohérent avec le seed** ; garde-fou division par zéro en place |
+| **Utilisateurs** | non-admin → 403 · email dupliqué → 409 · **pas de `password_hash`** dans les réponses · admin s'auto-désactive → 400 · cycle créer → login 200 → désactiver → login 401 → réactiver → login 200 |
+| **Navigateur** | dashboard Admin (4 graphiques Chart.js rendus, canvas 640×280, **0 erreur console**) · dashboard Demandeur (compteurs + 5 dernières) · dashboard Juriste (file d'attente triée) · cloche (badge 1 → dropdown → clic → /demandes/9 + badge 0) · page Utilisateurs (6 comptes) |
+
+**Toutes les fonctionnalités obligatoires EF01→EF24 sont désormais livrées.**
+
+**→ Décision : passage en P6 (Finitions & Optionnelles) autorisé.**
 
 ### Bilan P6 – Livraison
 *(à venir)*

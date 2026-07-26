@@ -13,7 +13,7 @@ import Demandes from './pages/Demandes';
 import NouvelleDemande from './pages/NouvelleDemande';
 import ModifierDemande from './pages/ModifierDemande';
 import DemandeDetail from './pages/DemandeDetail';
-import Placeholder from './pages/Placeholder';
+import Utilisateurs from './pages/Utilisateurs';
 import NotFound from './pages/NotFound';
 
 // Enveloppe une page dans le Layout + la protection de route
@@ -44,7 +44,7 @@ export default function App() {
           <Route path="/profil" element={<Page><Profil /></Page>} />
           <Route
             path="/utilisateurs"
-            element={<Page roles={['ADMIN']}><Placeholder titre="Gestion des utilisateurs" phase="Phase 5" /></Page>}
+            element={<Page roles={['ADMIN']}><Utilisateurs /></Page>}
           />
 
           <Route path="*" element={<NotFound />} />

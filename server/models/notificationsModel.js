@@ -35,4 +35,60 @@ const idsJuristesEtAdmins = async (client) => {
   return rows.map((r) => r.id);
 };
 
-module.exports = { creer, creerPourPlusieurs, idsJuristesEtAdmins };
+// --------------------------------------------------------------------------
+// LECTURE (Phase 5)
+// --------------------------------------------------------------------------
+
+/** Les N dernières notifications d'un utilisateur (plus récentes d'abord). */
+const listerParUser = async (userId, limite = 20) => {
+  const { rows } = await pool.query(
+    `SELECT id, demande_id, message, lue, created_at
+       FROM notifications
+      WHERE user_id = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT $2`,
+    [userId, limite]
+  );
+  return rows;
+};
+
+/** Nombre de notifications non lues d'un utilisateur. */
+const compterNonLues = async (userId) => {
+  const { rows } = await pool.query(
+    'SELECT COUNT(*) AS total FROM notifications WHERE user_id = $1 AND lue = FALSE',
+    [userId]
+  );
+  return parseInt(rows[0].total, 10);
+};
+
+/**
+ * Marque une notification comme lue.
+ * Le filtre sur user_id garantit qu'on ne touche jamais la notif d'un autre.
+ * @returns {boolean} true si une ligne a été affectée
+ */
+const marquerLue = async (id, userId) => {
+  const { rowCount } = await pool.query(
+    'UPDATE notifications SET lue = TRUE WHERE id = $1 AND user_id = $2',
+    [id, userId]
+  );
+  return rowCount > 0;
+};
+
+/** Marque toutes les notifications non lues d'un utilisateur comme lues. */
+const marquerToutLu = async (userId) => {
+  const { rowCount } = await pool.query(
+    'UPDATE notifications SET lue = TRUE WHERE user_id = $1 AND lue = FALSE',
+    [userId]
+  );
+  return rowCount;
+};
+
+module.exports = {
+  creer,
+  creerPourPlusieurs,
+  idsJuristesEtAdmins,
+  listerParUser,
+  compterNonLues,
+  marquerLue,
+  marquerToutLu
+};

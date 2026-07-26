@@ -3,6 +3,7 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const roleLibelle = { ADMIN: 'Administrateur', JURISTE: 'Juriste', DEMANDEUR: 'Demandeur' };
 
@@ -40,8 +41,9 @@ export default function Layout({ children }) {
             <NavLink to="/profil">Profil</NavLink>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-white/90 hidden md:inline">
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <span className="text-sm text-white/90 hidden md:inline ml-1">
               {user?.prenom} {user?.nom}
               <span className="text-white/60"> · {roleLibelle[user?.role] || user?.role}</span>
             </span>

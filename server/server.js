@@ -14,7 +14,9 @@ app.use(express.json());
 app.use('/api/health', require('./routes/health'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/demandes', require('./routes/demandes'));
-// Les routes restantes (users, notifications, stats) seront montées ici en P5.
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/stats', require('./routes/stats'));
+app.use('/api/users', require('./routes/users'));
 
 // Gestion d'erreurs centralisée (toujours en dernier)
 app.use(require('./middleware/errorHandler'));

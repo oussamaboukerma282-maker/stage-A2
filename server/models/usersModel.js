@@ -30,4 +30,71 @@ const updatePassword = async (id, passwordHash) => {
   await pool.query('UPDATE users SET password_hash = $2 WHERE id = $1', [id, passwordHash]);
 };
 
-module.exports = { findByEmail, findById, findHashById, updatePassword };
+// --------------------------------------------------------------------------
+// GESTION DES UTILISATEURS (Phase 5 — Admin). Jamais de password_hash renvoyé.
+// --------------------------------------------------------------------------
+
+const PAGE_SIZE = 20;
+
+/** Liste paginée + filtres role / actif. */
+const list = async ({ role, actif, page } = {}) => {
+  const where = [];
+  const params = [];
+  if (role) { params.push(role); where.push(`role = $${params.length}`); }
+  if (actif !== undefined && actif !== '') {
+    params.push(actif === 'true' || actif === true);
+    where.push(`actif = $${params.length}`);
+  }
+  const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const { rows: countRows } = await pool.query(`SELECT COUNT(*) AS total FROM users ${clause}`, params);
+  const totalItems = parseInt(countRows[0].total, 10);
+
+  const p = Math.max(1, parseInt(page, 10) || 1);
+  const offset = (p - 1) * PAGE_SIZE;
+  const { rows } = await pool.query(
+    `SELECT id, nom, prenom, email, role, structure, actif, created_at
+       FROM users ${clause}
+       ORDER BY nom, prenom
+       LIMIT ${PAGE_SIZE} OFFSET ${offset}`,
+    params
+  );
+  return { items: rows, pagination: { page: p, totalPages: Math.max(1, Math.ceil(totalItems / PAGE_SIZE)), totalItems } };
+};
+
+/** Création. Renvoie l'utilisateur SANS le hash. */
+const create = async ({ nom, prenom, email, passwordHash, role, structure }) => {
+  const { rows } = await pool.query(
+    `INSERT INTO users (nom, prenom, email, password_hash, role, structure)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, nom, prenom, email, role, structure, actif, created_at`,
+    [nom, prenom, email, passwordHash, role, structure || null]
+  );
+  return rows[0];
+};
+
+/** Mise à jour des champs modifiables (pas l'email ni le mot de passe). */
+const update = async (id, { nom, prenom, role, structure }) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET nom = $2, prenom = $3, role = $4, structure = $5
+      WHERE id = $1
+      RETURNING id, nom, prenom, email, role, structure, actif, created_at`,
+    [id, nom, prenom, role, structure || null]
+  );
+  return rows[0] || null;
+};
+
+/** Active ou désactive un compte. */
+const setActif = async (id, actif) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET actif = $2 WHERE id = $1
+      RETURNING id, nom, prenom, email, role, structure, actif, created_at`,
+    [id, actif]
+  );
+  return rows[0] || null;
+};
+
+module.exports = {
+  findByEmail, findById, findHashById, updatePassword,
+  list, create, update, setActif
+};
