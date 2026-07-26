@@ -66,17 +66,17 @@ export default function Profil() {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Mot de passe actuel</label>
             <input type="password" value={ancien} onChange={(e) => setAncien(e.target.value)} required
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire" />
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nouveau mot de passe</label>
             <input type="password" value={nouveau} onChange={(e) => setNouveau(e.target.value)} required
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire" />
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Confirmer le nouveau mot de passe</label>
             <input type="password" value={confirmation} onChange={(e) => setConfirmation(e.target.value)} required
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire" />
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire" />
           </div>
 
           {message && <p className="text-green-600 text-sm">{message}</p>}

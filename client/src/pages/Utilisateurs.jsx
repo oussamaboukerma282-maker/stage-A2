@@ -29,7 +29,7 @@ function UserDialog({ initial, onSave, onCancel }) {
     }
   };
 
-  const champ = 'w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
+  const champ = 'w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
@@ -105,7 +105,7 @@ export default function Utilisateurs() {
     }
   };
 
-  const champ = 'border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
+  const champ = 'border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
 
   return (
     <div>

@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Indique au navigateur le schéma de couleurs actif : les contrôles natifs
+   (input date, select, cases à cocher, barre de défilement, icône calendrier)
+   se rendent alors automatiquement en version claire ou sombre. */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
 /* Fond de base + transition douce lors du changement de thème */
 body {
   @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
