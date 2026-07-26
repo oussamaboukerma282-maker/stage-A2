@@ -8,11 +8,11 @@ const COULEURS = {
   'Complément demandé': 'bg-orange-100 text-orange-800 border-orange-200',
   'Validée': 'bg-green-100 text-green-800 border-green-200',
   'Rejetée': 'bg-red-100 text-red-800 border-red-200',
-  'Annulée': 'bg-gray-100 text-gray-600 border-gray-200'
+  'Annulée': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
 };
 
 export default function StatutBadge({ statut }) {
-  const classes = COULEURS[statut] || 'bg-gray-100 text-gray-700 border-gray-200';
+  const classes = COULEURS[statut] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700';
   return (
     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${classes}`}>
       {statut}

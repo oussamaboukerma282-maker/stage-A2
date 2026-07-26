@@ -726,5 +726,30 @@ est désormais fiable quel que soit le mode d'appel.
 
 **→ Décision : passage en P6 (Finitions & Optionnelles) autorisé.**
 
-### Bilan P6 – Livraison
-*(à venir)*
+### Bilan P6 – Livraison ✅ Terminée (26/07/2026)
+
+**Consolidation (J1) :** non-régression sécurité revérifiée — cloisonnement (403), transition
+interdite (409), rôles (403), verrouillage terminal (409), pas de `password_hash` (✔),
+token invalide (401). **Aucune régression.**
+
+**Optionnelles réalisées — les 5 prévues, chacune finie ET testée :**
+
+| ID | Fonctionnalité | Validation |
+|---|---|---|
+| OPT06 | Mode sombre | Toggle fonctionnel + persistant · 166 variantes `dark:` sur toute l'UI · testé en navigateur (dashboard admin lisible dans les 2 thèmes) |
+| OPT05 | Export CSV | Juriste → 403 · **BOM UTF-8** (accents Excel OK) · filtres respectés · visibilité admin (13 lignes) |
+| OPT01 | Fil de commentaires | Publication multi-rôles · isolation (non-propriétaire → 403) · verrouillage clôturé (409) · longueur (400) · testé en navigateur |
+| OPT03 | Export PDF | PDF valide 1 page · toutes sections (infos, description, avis, journal) · sécurité (403) · rendu vérifié |
+| OPT04 | QR code | Intégré au PDF, scannable, pointe vers `/demandes/:id` |
+
+> OPT02 (mentions @) **non retenue** — coût/valeur défavorable, laissée en perspective.
+
+**Défaut mineur corrigé pendant les tests PDF** : la flèche `→` ne fait pas partie de la police
+Helvetica (WinAnsi) → remplacée par `->` ; pied de page repositionné pour éviter une 2ᵉ page vide.
+
+**Nouvelles dépendances** : `pdfkit`, `qrcode` (backend). Dark mode = Tailwind natif.
+
+**État final** : toutes les fonctionnalités obligatoires **et** les 5 optionnelles sont livrées et
+testées. Jeu de démo restauré (15 demandes, 6 comptes, 0 upload résiduel).
+
+**→ Projet complet. Tag `v1.0`.**

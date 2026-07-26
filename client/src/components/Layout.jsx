@@ -3,9 +3,30 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
 
 const roleLibelle = { ADMIN: 'Administrateur', JURISTE: 'Juriste', DEMANDEUR: 'Demandeur' };
+
+function ThemeToggle() {
+  const { theme, basculer } = useTheme();
+  return (
+    <button onClick={basculer} aria-label="Changer de thème"
+            className="p-2 rounded-md hover:bg-white/10 transition text-white" title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}>
+      {theme === 'dark' ? (
+        // Soleil
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="4" /><path strokeLinecap="round" d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.5 6.5-1.5-1.5M6 6 4.5 4.5m13 0L16 6M6 18l-1.5 1.5" />
+        </svg>
+      ) : (
+        // Lune
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 function NavLink({ to, children }) {
   const { pathname } = useLocation();
@@ -26,7 +47,7 @@ export default function Layout({ children }) {
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <nav className="bg-primaire text-white shadow">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
@@ -42,6 +63,7 @@ export default function Layout({ children }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <NotificationBell />
             <span className="text-sm text-white/90 hidden md:inline ml-1">
               {user?.prenom} {user?.nom}

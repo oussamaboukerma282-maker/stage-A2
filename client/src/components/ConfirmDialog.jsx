@@ -47,20 +47,20 @@ export default function ConfirmDialog({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
          onClick={(e) => e.target === e.currentTarget && !enCours && onCancel()}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-        <h3 className="text-lg font-bold text-marine mb-2">{titre}</h3>
-        {message && <p className="text-sm text-gray-600 mb-4">{message}</p>}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6">
+        <h3 className="text-lg font-bold text-marine dark:text-purple-300 mb-2">{titre}</h3>
+        {message && <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{message}</p>}
 
         {champRequis && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{labelChamp} *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{labelChamp} *</label>
             <textarea
               value={texte}
               onChange={(e) => setTexte(e.target.value)}
               rows={5}
               placeholder={placeholder}
               autoFocus
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm
                          focus:outline-none focus:ring-2 focus:ring-primaire"
             />
             <p className="text-xs text-gray-400 mt-1">
@@ -73,7 +73,7 @@ export default function ConfirmDialog({
 
         <div className="flex justify-end gap-3">
           <button onClick={onCancel} disabled={enCours}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-60">
+            className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40 disabled:opacity-60">
             Annuler
           </button>
           <button onClick={confirmer} disabled={enCours || !texteValide}

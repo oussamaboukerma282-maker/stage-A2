@@ -4,7 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const demandesModel = require('../models/demandesModel');
 const historiqueModel = require('../models/historiqueModel');
+const commentairesModel = require('../models/commentairesModel');
 const workflow = require('../services/workflow');
+const { genererFicheDemande } = require('../services/pdf');
 const { sensibilitePourTheme, sensibiliteValide } = require('../config/themes');
 const { AppError, asyncHandler } = require('../utils/AppError');
 const { ok, okPaginated } = require('../helpers/response');
@@ -177,6 +179,73 @@ const historique = asyncHandler(async (req, res) => {
   ok(res, await historiqueModel.listerParDemande(req.params.id));
 });
 
+// GET /api/demandes/:id/commentaires  (OPT01)
+const listerCommentaires = asyncHandler(async (req, res) => {
+  const demande = await chargerDemande(req.params.id);
+  verifierLecture(demande, req.user);
+  ok(res, await commentairesModel.listerParDemande(req.params.id));
+});
+
+// POST /api/demandes/:id/commentaires  (OPT01)
+const ajouterCommentaire = asyncHandler(async (req, res) => {
+  const demande = await chargerDemande(req.params.id);
+  verifierLecture(demande, req.user); // mêmes droits que la lecture de la demande
+
+  // Cohérent avec le verrouillage terminal : pas de commentaire sur une demande clôturée
+  if (workflow.estTerminal(demande.statut)) {
+    throw new AppError(409, 'INVALID_TRANSITION', 'Impossible de commenter une demande clôturée');
+  }
+
+  const commentaire = await commentairesModel.creer({
+    demande_id: req.params.id,
+    auteur_id: req.user.id,
+    contenu: req.body.contenu.trim()
+  });
+  ok(res, commentaire, 201);
+});
+
+// GET /api/demandes/:id/pdf  (OPT03 + OPT04) — fiche PDF avec QR code
+const exporterPdf = asyncHandler(async (req, res) => {
+  const demande = await chargerDemande(req.params.id);
+  verifierLecture(demande, req.user);
+  const historique = await historiqueModel.listerParDemande(req.params.id);
+
+  const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const urlPublique = `${baseUrl}/demandes/${demande.id}`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="demande-${demande.id}.pdf"`);
+  await genererFicheDemande(res, demande, historique, urlPublique);
+});
+
+// GET /api/demandes/export/csv  (OPT05 — Admin) — respecte les mêmes filtres que la liste
+const exporterCsv = asyncHandler(async (req, res) => {
+  const { statut, theme, date_debut, date_fin } = req.query;
+  // On réutilise le modèle de liste, sans pagination (page très large)
+  const resultat = await demandesModel.list(req.user, { statut, theme, date_debut, date_fin, page: 1, tout: true });
+
+  const colonnes = ['ID', 'Titre', 'Thème', 'Sensibilité', 'Statut', 'Demandeur', 'Juriste', 'Créée le', 'Traitée le'];
+  const echapper = (v) => {
+    const s = v == null ? '' : String(v);
+    // Échappe si le champ contient ; " ou un retour à la ligne
+    return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lignes = resultat.items.map((d) => [
+    d.id, d.titre, d.theme, d.degre_sensibilite, d.statut,
+    `${d.demandeur_prenom} ${d.demandeur_nom}`,
+    d.juriste_nom ? `${d.juriste_prenom} ${d.juriste_nom}` : '',
+    d.date_creation ? new Date(d.date_creation).toLocaleDateString('fr-FR') : '',
+    d.date_traitement ? new Date(d.date_traitement).toLocaleDateString('fr-FR') : ''
+  ].map(echapper).join(';'));
+
+  // BOM UTF-8 (﻿) pour qu'Excel affiche correctement les accents
+  const csv = '﻿' + [colonnes.join(';'), ...lignes].join('\r\n');
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="demandes.csv"');
+  res.send(csv);
+});
+
 // POST /api/demandes/:id/piece-jointe
 const uploaderPieceJointe = asyncHandler(async (req, res) => {
   if (!req.file) throw new AppError(400, 'VALIDATION', 'Aucun fichier reçu');
@@ -254,6 +323,10 @@ module.exports = {
   rejeter,
   modifierTheme,
   historique,
+  listerCommentaires,
+  ajouterCommentaire,
+  exporterPdf,
+  exporterCsv,
   // Pièces jointes
   uploaderPieceJointe,
   telechargerPieceJointe,

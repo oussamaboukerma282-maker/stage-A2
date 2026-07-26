@@ -79,9 +79,9 @@ export default function NotificationBell() {
       </button>
 
       {ouvert && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
-            <span className="font-semibold text-gray-700 text-sm">Notifications</span>
+        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">Notifications</span>
             {nonLues > 0 && (
               <button onClick={toutMarquerLu} className="text-xs text-primaire hover:underline">
                 Tout marquer comme lu
@@ -97,12 +97,12 @@ export default function NotificationBell() {
                 <button
                   key={n.id}
                   onClick={() => ouvrirNotification(n)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition
+                  className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40 transition
                               flex gap-2 ${n.lue ? '' : 'bg-purple-50/50'}`}
                 >
                   <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.lue ? 'bg-transparent' : 'bg-primaire'}`} />
                   <span className="min-w-0">
-                    <span className="block text-sm text-gray-800">{n.message}</span>
+                    <span className="block text-sm text-gray-800 dark:text-gray-100">{n.message}</span>
                     <span className="block text-xs text-gray-400 mt-0.5">{tempsRelatif(n.created_at)}</span>
                   </span>
                 </button>

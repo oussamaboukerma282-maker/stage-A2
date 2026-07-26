@@ -27,7 +27,7 @@ export default function DashboardDemandeur() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-marine">Bonjour {user?.prenom} 👋</h1>
+        <h1 className="text-2xl font-bold text-marine dark:text-purple-300">Bonjour {user?.prenom} 👋</h1>
         <Link to="/demandes/nouvelle"
           className="bg-primaire text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-primaire/90 transition">
           + Nouvelle demande
@@ -41,9 +41,9 @@ export default function DashboardDemandeur() {
         <StatCard titre="Total" valeur={stats.total} couleur="marine" to="/demandes" />
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-700">Mes dernières demandes</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-700 dark:text-gray-200">Mes dernières demandes</h2>
           <Link to="/demandes" className="text-sm text-primaire hover:underline">Voir tout</Link>
         </div>
         {stats.recentes.length === 0 ? (
@@ -53,10 +53,10 @@ export default function DashboardDemandeur() {
             <tbody>
               {stats.recentes.map((d) => (
                 <tr key={d.id} onClick={() => navigate(`/demandes/${d.id}`)}
-                    className="border-t border-gray-50 hover:bg-gray-50 cursor-pointer">
+                    className="border-t border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40 cursor-pointer">
                   <td className="px-5 py-3 text-gray-400 w-12">#{d.id}</td>
-                  <td className="px-3 py-3 font-medium text-gray-800">{d.titre}</td>
-                  <td className="px-3 py-3 text-gray-500 hidden sm:table-cell">{d.theme}</td>
+                  <td className="px-3 py-3 font-medium text-gray-800 dark:text-gray-100">{d.titre}</td>
+                  <td className="px-3 py-3 text-gray-500 dark:text-gray-400 hidden sm:table-cell">{d.theme}</td>
                   <td className="px-3 py-3"><StatutBadge statut={d.statut} /></td>
                   <td className="px-5 py-3 text-gray-400 text-right">{formaterDate(d.date_creation)}</td>
                 </tr>

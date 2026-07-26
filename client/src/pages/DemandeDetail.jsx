@@ -11,6 +11,7 @@ import api from '../api/axios';
 import StatutBadge from '../components/StatutBadge';
 import Timeline from '../components/Timeline';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FilCommentaires from '../components/FilCommentaires';
 import { formaterTaille } from '../components/FileUpload';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,9 +22,9 @@ const STATUTS_MODIFIABLES = ['Brouillon', 'Complément demandé'];
 
 function Ligne({ label, children }) {
   return (
-    <div className="flex justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
-      <span className="text-gray-500 text-sm shrink-0">{label}</span>
-      <span className="font-medium text-gray-800 text-sm text-right">{children}</span>
+    <div className="flex justify-between gap-4 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+      <span className="text-gray-500 dark:text-gray-400 text-sm shrink-0">{label}</span>
+      <span className="font-medium text-gray-800 dark:text-gray-100 text-sm text-right">{children}</span>
     </div>
   );
 }
@@ -87,11 +88,26 @@ export default function DemandeDetail() {
     }
   };
 
+  // Export PDF de la fiche (OPT03 + QR code OPT04)
+  const exporterPdf = async () => {
+    try {
+      const res = await api.get(`/demandes/${id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `demande-${id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setAction("Impossible de générer le PDF.");
+    }
+  };
+
   if (chargement) return <p className="text-gray-400">Chargement…</p>;
 
   if (erreur) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
         <p className="text-red-600 mb-3">{erreur}</p>
         <Link to="/demandes" className="text-primaire underline text-sm">Retour aux demandes</Link>
       </div>
@@ -108,7 +124,7 @@ export default function DemandeDetail() {
     secondaire: 'border border-primaire text-primaire hover:bg-purple-50',
     vert: 'bg-green-700 text-white hover:bg-green-800',
     rouge: 'bg-red-700 text-white hover:bg-red-800',
-    neutre: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+    neutre: 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40'
   };
 
   const actionsDisponibles = [];
@@ -149,20 +165,26 @@ export default function DemandeDetail() {
 
   return (
     <div className="max-w-3xl">
-      <Link to="/demandes" className="text-sm text-gray-500 hover:underline">← Retour aux demandes</Link>
+      <Link to="/demandes" className="text-sm text-gray-500 dark:text-gray-400 hover:underline">← Retour aux demandes</Link>
 
       <div className="flex items-start justify-between gap-4 mt-2 mb-6">
-        <h1 className="text-2xl font-bold text-marine">
+        <h1 className="text-2xl font-bold text-marine dark:text-purple-300">
           <span className="text-gray-400">#{demande.id}</span> {demande.titre}
         </h1>
-        <StatutBadge statut={demande.statut} />
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={exporterPdf}
+            className="text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+            Exporter en PDF
+          </button>
+          <StatutBadge statut={demande.statut} />
+        </div>
       </div>
 
       {action && <p className="text-red-600 text-sm mb-4">{action}</p>}
 
       {/* Informations */}
-      <div className="bg-white rounded-lg shadow p-6 mb-4">
-        <h2 className="font-semibold text-gray-700 mb-3">Informations</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
+        <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Informations</h2>
         <Ligne label="Thème">{demande.theme}</Ligne>
         <Ligne label="Degré de sensibilité">{demande.degre_sensibilite}</Ligne>
         <Ligne label="Demandeur">
@@ -180,9 +202,9 @@ export default function DemandeDetail() {
       </div>
 
       {/* Description */}
-      <div className="bg-white rounded-lg shadow p-6 mb-4">
-        <h2 className="font-semibold text-gray-700 mb-3">Description</h2>
-        <p className="text-gray-700 whitespace-pre-wrap text-sm">{demande.description}</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
+        <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Description</h2>
+        <p className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap text-sm">{demande.description}</p>
       </div>
 
       {/* Contenu produit par le juriste (visible selon l'avancement) */}
@@ -206,11 +228,11 @@ export default function DemandeDetail() {
       )}
 
       {/* Pièce jointe */}
-      <div className="bg-white rounded-lg shadow p-6 mb-4">
-        <h2 className="font-semibold text-gray-700 mb-3">Pièce jointe</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
+        <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Pièce jointe</h2>
         {demande.piece_jointe_nom ? (
           <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-gray-700 truncate">
+            <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
               {demande.piece_jointe_nom}
               <span className="text-gray-400"> ({formaterTaille(demande.piece_jointe_taille)})</span>
             </span>
@@ -226,8 +248,8 @@ export default function DemandeDetail() {
 
       {/* Actions contextuelles — dépendent du couple (rôle, statut) */}
       {actionsDisponibles.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6 mb-4">
-          <h2 className="font-semibold text-gray-700 mb-3">Actions</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
+          <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Actions</h2>
           <div className="flex flex-wrap gap-3">
             {actionsDisponibles.map((a) => (
               <button key={a.cle} onClick={a.onClick} className={`rounded-md px-4 py-2 text-sm font-medium transition ${a.classe}`}>
@@ -239,10 +261,13 @@ export default function DemandeDetail() {
       )}
 
       {/* Journal d'activité */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="font-semibold text-gray-700 mb-4">Journal d'activité</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
+        <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Journal d'activité</h2>
         <Timeline evenements={historique} />
       </div>
+
+      {/* Fil de commentaires (OPT01) */}
+      <FilCommentaires demandeId={id} verrouille={['Validée', 'Rejetée', 'Annulée'].includes(demande.statut)} />
 
       {/* Modales de confirmation */}
       {dialog === 'complement' && (

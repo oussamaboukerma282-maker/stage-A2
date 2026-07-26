@@ -36,17 +36,17 @@ export default function Timeline({ evenements }) {
             {/* Contenu */}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-baseline gap-x-2">
-                <span className="font-medium text-gray-800 text-sm">
+                <span className="font-medium text-gray-800 dark:text-gray-100 text-sm">
                   {e.ancien_statut ? `${e.ancien_statut} → ${e.nouveau_statut}` : e.nouveau_statut}
                 </span>
                 <span className="text-xs text-gray-400">{formaterDate(e.created_at)}</span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 par {e.user_prenom} {e.user_nom}
                 <span className="text-gray-400"> · {ROLE_LIBELLE[e.user_role] || e.user_role}</span>
               </p>
               {e.commentaire && (
-                <p className="mt-1.5 text-sm text-gray-700 bg-gray-50 border-l-2 border-gray-300 pl-3 py-1.5 whitespace-pre-wrap">
+                <p className="mt-1.5 text-sm text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/40 border-l-2 border-gray-300 dark:border-gray-600 pl-3 py-1.5 whitespace-pre-wrap">
                   {e.commentaire}
                 </p>
               )}

@@ -29,20 +29,20 @@ function UserDialog({ initial, onSave, onCancel }) {
     }
   };
 
-  const champ = 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
+  const champ = 'w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
          onClick={(e) => e.target === e.currentTarget && !enCours && onCancel()}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h3 className="text-lg font-bold text-marine mb-4">{edition ? 'Modifier l’utilisateur' : 'Nouvel utilisateur'}</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+        <h3 className="text-lg font-bold text-marine dark:text-purple-300 mb-4">{edition ? 'Modifier l’utilisateur' : 'Nouvel utilisateur'}</h3>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input placeholder="Prénom" value={form.prenom} onChange={(e) => maj('prenom', e.target.value)} className={champ} />
             <input placeholder="Nom" value={form.nom} onChange={(e) => maj('nom', e.target.value)} className={champ} />
           </div>
           <input placeholder="Email" type="email" value={form.email} disabled={edition}
-                 onChange={(e) => maj('email', e.target.value)} className={`${champ} ${edition ? 'bg-gray-100 text-gray-500' : ''}`} />
+                 onChange={(e) => maj('email', e.target.value)} className={`${champ} ${edition ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' : ''}`} />
           {!edition && (
             <input placeholder="Mot de passe (min. 8 caractères)" type="password" value={form.password}
                    onChange={(e) => maj('password', e.target.value)} className={champ} />
@@ -56,7 +56,7 @@ function UserDialog({ initial, onSave, onCancel }) {
         {erreur && <p className="text-red-600 text-sm mt-3">{erreur}</p>}
 
         <div className="flex justify-end gap-3 mt-5">
-          <button onClick={onCancel} disabled={enCours} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-60">Annuler</button>
+          <button onClick={onCancel} disabled={enCours} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40 disabled:opacity-60">Annuler</button>
           <button onClick={enregistrer} disabled={enCours}
             className="px-4 py-2 text-sm text-white bg-primaire rounded-md hover:bg-primaire/90 disabled:opacity-60">
             {enCours ? 'Enregistrement…' : 'Enregistrer'}
@@ -105,19 +105,19 @@ export default function Utilisateurs() {
     }
   };
 
-  const champ = 'border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
+  const champ = 'border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primaire';
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-marine">Gestion des utilisateurs</h1>
+        <h1 className="text-2xl font-bold text-marine dark:text-purple-300">Gestion des utilisateurs</h1>
         <button onClick={() => setDialog({ mode: 'create' })}
           className="bg-primaire text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-primaire/90 transition">
           + Nouvel utilisateur
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 mb-4 flex gap-3">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4 flex gap-3">
         <select value={filtreRole} onChange={(e) => setFiltreRole(e.target.value)} className={champ}>
           <option value="">Tous les rôles</option>
           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LIBELLE[r]}</option>)}
@@ -131,14 +131,14 @@ export default function Utilisateurs() {
 
       {erreur && <p className="text-red-600 text-sm mb-3">{erreur}</p>}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {chargement ? (
           <p className="text-center text-gray-400 py-8">Chargement…</p>
         ) : users.length === 0 ? (
           <p className="text-center text-gray-400 py-8">Aucun utilisateur.</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300">
               <tr>
                 <th className="text-left px-4 py-3 font-medium">Nom</th>
                 <th className="text-left px-4 py-3 font-medium">Email</th>
@@ -149,10 +149,10 @@ export default function Utilisateurs() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-t border-gray-100">
-                  <td className="px-4 py-3 font-medium text-gray-800">{u.prenom} {u.nom}</td>
-                  <td className="px-4 py-3 text-gray-600">{u.email}</td>
-                  <td className="px-4 py-3 text-gray-600">{ROLE_LIBELLE[u.role]}</td>
+                <tr key={u.id} className="border-t border-gray-100 dark:border-gray-700">
+                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{u.prenom} {u.nom}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{u.email}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{ROLE_LIBELLE[u.role]}</td>
                   <td className="px-4 py-3">
                     {u.actif
                       ? <span className="text-green-700 text-xs font-medium">● Actif</span>

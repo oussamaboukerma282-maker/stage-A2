@@ -21,7 +21,7 @@ export default function DashboardJuriste() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-marine mb-6">Bonjour {user?.prenom} 👋</h1>
+      <h1 className="text-2xl font-bold text-marine dark:text-purple-300 mb-6">Bonjour {user?.prenom} 👋</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard titre="À traiter" valeur={stats.aTraiter} sousTitre="demandes soumises" couleur="ambre" to="/demandes?statut=Soumise" />
@@ -29,16 +29,16 @@ export default function DashboardJuriste() {
         <StatCard titre="Mes dossiers traités" valeur={stats.mesTraitees} couleur="vert" />
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-700">File d'attente — demandes à prendre en charge</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-700 dark:text-gray-200">File d'attente — demandes à prendre en charge</h2>
           <p className="text-xs text-gray-400">Les plus anciennes en premier</p>
         </div>
         {stats.recentesATraiter.length === 0 ? (
           <p className="text-center text-gray-400 py-8 text-sm">Aucune demande en attente. 🎉</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs">
+            <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 text-xs">
               <tr>
                 <th className="text-left px-5 py-2 font-medium">#</th>
                 <th className="text-left px-3 py-2 font-medium">Titre</th>
@@ -50,11 +50,11 @@ export default function DashboardJuriste() {
             <tbody>
               {stats.recentesATraiter.map((d) => (
                 <tr key={d.id} onClick={() => navigate(`/demandes/${d.id}`)}
-                    className="border-t border-gray-50 hover:bg-gray-50 cursor-pointer">
+                    className="border-t border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40 cursor-pointer">
                   <td className="px-5 py-3 text-gray-400">#{d.id}</td>
-                  <td className="px-3 py-3 font-medium text-gray-800">{d.titre}</td>
-                  <td className="px-3 py-3 text-gray-500 hidden sm:table-cell">{d.demandeur_prenom} {d.demandeur_nom}</td>
-                  <td className="px-3 py-3 text-gray-600">{d.degre_sensibilite}</td>
+                  <td className="px-3 py-3 font-medium text-gray-800 dark:text-gray-100">{d.titre}</td>
+                  <td className="px-3 py-3 text-gray-500 dark:text-gray-400 hidden sm:table-cell">{d.demandeur_prenom} {d.demandeur_nom}</td>
+                  <td className="px-3 py-3 text-gray-600 dark:text-gray-300">{d.degre_sensibilite}</td>
                   <td className="px-5 py-3 text-gray-400 text-right">{formaterDate(d.date_soumission)}</td>
                 </tr>
               ))}

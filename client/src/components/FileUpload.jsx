@@ -47,15 +47,15 @@ export default function FileUpload({ fichier, onChange, progression }) {
         type="file"
         onChange={choisir}
         accept={EXTENSIONS.join(',')}
-        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-md
+        className="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-md
                    file:border-0 file:bg-primaire file:text-white file:text-sm file:font-medium
                    hover:file:bg-primaire/90 file:cursor-pointer"
       />
       <p className="text-xs text-gray-400 mt-1">PDF, DOCX, PNG ou JPG — 10 Mo maximum.</p>
 
       {fichier && (
-        <div className="mt-2 flex items-center justify-between bg-gray-50 border rounded-md px-3 py-2">
-          <span className="text-sm text-gray-700 truncate">
+        <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700/40 border rounded-md px-3 py-2">
+          <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
             {fichier.name} <span className="text-gray-400">({formaterTaille(fichier.size)})</span>
           </span>
           <button type="button" onClick={retirer} className="text-sm text-red-600 hover:underline ml-3">

@@ -25,8 +25,8 @@ const optionsLine = { plugins: { legend: { display: false } }, maintainAspectRat
 
 function Carte({ titre, children }) {
   return (
-    <div className="bg-white rounded-lg shadow p-5">
-      <h3 className="font-semibold text-gray-700 text-sm mb-3">{titre}</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+      <h3 className="font-semibold text-gray-700 dark:text-gray-200 text-sm mb-3">{titre}</h3>
       <div className="h-56">{children}</div>
     </div>
   );
@@ -67,7 +67,7 @@ export default function DashboardAdmin() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-marine mb-6">Tableau de bord</h1>
+      <h1 className="text-2xl font-bold text-marine dark:text-purple-300 mb-6">Tableau de bord</h1>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

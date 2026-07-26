@@ -56,12 +56,13 @@ const list = async (user, filtres = {}) => {
   const { rows: countRows } = await pool.query(countSql, params);
   const totalItems = parseInt(countRows[0].total, 10);
 
-  // Page demandée
+  // Page demandée — ou toutes les lignes si `tout` (utilisé pour l'export CSV)
   const page = Math.max(1, parseInt(filtres.page, 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
+  const pagination = filtres.tout ? '' : `LIMIT ${PAGE_SIZE} OFFSET ${offset}`;
   const sql = `${SELECT_BASE} ${clauseWhere}
                ORDER BY d.date_creation DESC
-               LIMIT ${PAGE_SIZE} OFFSET ${offset}`;
+               ${pagination}`;
   const { rows } = await pool.query(sql, params);
 
   return {

@@ -26,6 +26,9 @@ const champsDemande = [
 // Liste (filtrage par rôle appliqué côté modèle)
 router.get('/', ctrl.lister);
 
+// Export CSV (OPT05) — AVANT /:id pour éviter que "export" soit pris pour un id
+router.get('/export/csv', roles('ADMIN'), ctrl.exporterCsv);
+
 // Création — réservée au DEMANDEUR
 router.post('/', roles('DEMANDEUR'), champsDemande, validate, ctrl.creer);
 
@@ -80,6 +83,16 @@ router.put('/:id/theme',                                                        
 
 // Journal d'activité
 router.get('/:id/historique', idValide, validate, ctrl.historique);
+
+// Export PDF de la fiche (OPT03 + OPT04)
+router.get('/:id/pdf', idValide, validate, ctrl.exporterPdf);
+
+// Fil de commentaires (OPT01)
+router.get('/:id/commentaires', idValide, validate, ctrl.listerCommentaires);
+router.post('/:id/commentaires',
+  [idValide, body('contenu').trim().isLength({ min: 2, max: 2000 })
+    .withMessage('Le commentaire doit contenir entre 2 et 2000 caractères')],
+  validate, ctrl.ajouterCommentaire);
 
 // Pièces jointes
 router.post('/:id/piece-jointe', roles('DEMANDEUR'), uploadPieceJointe, ctrl.uploaderPieceJointe);

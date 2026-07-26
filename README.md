@@ -5,6 +5,24 @@ stage A2 à Natixis Algeria (Direction des Affaires Juridiques).
 
 **Stack** : PostgreSQL · Express.js · React.js · Node.js — avec Tailwind CSS et JWT.
 
+## Fonctionnalités
+
+**Obligatoires (EF01→EF24)**
+- Authentification JWT + bcrypt, 3 rôles (Demandeur / Juriste / Administrateur)
+- Gestion des demandes : création, brouillon, soumission, pièces jointes (upload local)
+- Workflow complet à 7 statuts via un moteur de transitions transactionnel
+- Traçabilité : historique immuable + journal d'activité
+- Notifications internes (cloche + polling)
+- Tableaux de bord par rôle (KPIs + graphiques Chart.js)
+- Gestion des utilisateurs (CRUD Admin)
+
+**Optionnelles**
+- 🌙 Mode sombre (persistant)
+- 📄 Export CSV de la liste (Admin)
+- 💬 Fil de commentaires sur les demandes
+- 🧾 Export PDF d'une fiche demande
+- 🔳 QR code intégré au PDF (accès à la demande en ligne)
+
 ---
 
 ## Prérequis

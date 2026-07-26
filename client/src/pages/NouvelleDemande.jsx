@@ -84,31 +84,31 @@ export default function NouvelleDemande() {
     }
   };
 
-  const champ = 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire';
+  const champ = 'w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primaire';
 
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <Link to="/demandes" className="text-sm text-gray-500 hover:underline">← Retour aux demandes</Link>
-        <h1 className="text-2xl font-bold text-marine mt-1">Nouvelle demande d'avis</h1>
+        <Link to="/demandes" className="text-sm text-gray-500 dark:text-gray-400 hover:underline">← Retour aux demandes</Link>
+        <h1 className="text-2xl font-bold text-marine dark:text-purple-300 mt-1">Nouvelle demande d'avis</h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 space-y-5">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Titre *</label>
           <input value={titre} onChange={(e) => setTitre(e.target.value)} className={champ}
                  placeholder="Objet de la demande" maxLength={250} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Thème *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Thème *</label>
             <select value={theme} onChange={(e) => changerTheme(e.target.value)} className={champ}>
               {THEMES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Degré de sensibilité
               <span className="text-gray-400 font-normal"> (proposé automatiquement)</span>
             </label>
@@ -119,13 +119,13 @@ export default function NouvelleDemande() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Description *</label>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6}
                     className={champ} placeholder="Exposez la problématique juridique…" />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pièce jointe</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Pièce jointe</label>
           <FileUpload fichier={fichier} onChange={setFichier} progression={progression} />
         </div>
 
