@@ -1,10 +1,12 @@
 // Layout commun aux pages authentifiées : navbar + zone de contenu.
 // La navbar affiche des liens conditionnés au rôle et le bouton de déconnexion.
 
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
+import ConfirmModal from './ConfirmModal';
 
 const roleLibelle = { ADMIN: 'Administrateur', JURISTE: 'Juriste', DEMANDEUR: 'Demandeur' };
 
@@ -45,6 +47,7 @@ function NavLink({ to, children }) {
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const [confirmationDeconnexion, setConfirmationDeconnexion] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -70,7 +73,7 @@ export default function Layout({ children }) {
               <span className="text-white/60"> · {roleLibelle[user?.role] || user?.role}</span>
             </span>
             <button
-              onClick={logout}
+              onClick={() => setConfirmationDeconnexion(true)}
               className="text-sm bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-md transition"
             >
               Déconnexion
@@ -80,6 +83,15 @@ export default function Layout({ children }) {
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+
+      <ConfirmModal
+        open={confirmationDeconnexion}
+        onClose={() => setConfirmationDeconnexion(false)}
+        onConfirm={logout}
+        titre="Se déconnecter ?"
+        description="Vous allez être déconnecté de votre session. Vous devrez vous reconnecter pour accéder à l'application."
+        libelleConfirmer="Se déconnecter"
+      />
     </div>
   );
 }
