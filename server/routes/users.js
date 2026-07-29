@@ -7,6 +7,11 @@ const roles = require('../middleware/roles');
 const validate = require('../middleware/validate');
 const ctrl = require('../controllers/usersController');
 
+// Recherche paginée pour les mentions (OPT02) — accessible à TOUT utilisateur
+// authentifié (pas seulement ADMIN). Déclarée AVANT le garde ADMIN ci-dessous.
+router.get('/mention', auth, ctrl.rechercheMention);
+
+// Toutes les routes suivantes sont réservées aux administrateurs.
 router.use(auth, roles('ADMIN'));
 
 const idValide = param('id').isInt({ min: 1 }).withMessage('Identifiant invalide');

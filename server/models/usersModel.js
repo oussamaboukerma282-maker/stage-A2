@@ -84,6 +84,30 @@ const update = async (id, { nom, prenom, role, structure }) => {
   return rows[0] || null;
 };
 
+/**
+ * Recherche paginée d'utilisateurs pour les mentions (OPT02).
+ * Renvoie 10 résultats max + un indicateur hasMore.
+ * Astuce : on demande LIMIT+1 lignes ; si on en reçoit une de plus,
+ * c'est qu'il existe une page suivante (pas besoin d'un COUNT séparé).
+ */
+const MENTION_PAGE = 10;
+const searchMention = async (q, page, excludeId) => {
+  const offset = (Math.max(1, parseInt(page, 10) || 1) - 1) * MENTION_PAGE;
+  const terme = `%${(q || '').trim()}%`;
+  const { rows } = await pool.query(
+    `SELECT id, prenom, nom, role
+       FROM users
+      WHERE actif = TRUE
+        AND id <> $1
+        AND (prenom ILIKE $2 OR nom ILIKE $2 OR (prenom || ' ' || nom) ILIKE $2)
+      ORDER BY prenom, nom
+      LIMIT ${MENTION_PAGE + 1} OFFSET ${offset}`,
+    [excludeId, terme]
+  );
+  const hasMore = rows.length > MENTION_PAGE;
+  return { items: rows.slice(0, MENTION_PAGE), hasMore };
+};
+
 /** Active ou désactive un compte. */
 const setActif = async (id, actif) => {
   const { rows } = await pool.query(
@@ -96,5 +120,5 @@ const setActif = async (id, actif) => {
 
 module.exports = {
   findByEmail, findById, findHashById, updatePassword,
-  list, create, update, setActif
+  list, create, update, setActif, searchMention
 };

@@ -5,6 +5,7 @@ const fs = require('fs');
 const demandesModel = require('../models/demandesModel');
 const historiqueModel = require('../models/historiqueModel');
 const commentairesModel = require('../models/commentairesModel');
+const notificationsModel = require('../models/notificationsModel');
 const workflow = require('../services/workflow');
 const { genererFicheDemande } = require('../services/pdf');
 const { sensibilitePourTheme, sensibiliteValide } = require('../config/themes');
@@ -201,6 +202,18 @@ const ajouterCommentaire = asyncHandler(async (req, res) => {
     auteur_id: req.user.id,
     contenu: req.body.contenu.trim()
   });
+
+  // Mentions (OPT02) : notification ciblée pour chaque utilisateur mentionné.
+  const mentions = Array.isArray(req.body.mentions)
+    ? req.body.mentions.map(Number).filter(Number.isInteger)
+    : [];
+  if (mentions.length) {
+    await notificationsModel.creerPourMentions(req.user.id, mentions, {
+      demande_id: req.params.id,
+      message: `${req.user.prenom} ${req.user.nom} vous a mentionné dans la demande #${req.params.id}.`
+    });
+  }
+
   ok(res, commentaire, 201);
 });
 

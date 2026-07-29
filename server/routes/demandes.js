@@ -87,11 +87,15 @@ router.get('/:id/historique', idValide, validate, ctrl.historique);
 // Export PDF de la fiche (OPT03 + OPT04)
 router.get('/:id/pdf', idValide, validate, ctrl.exporterPdf);
 
-// Fil de commentaires (OPT01)
+// Fil de commentaires (OPT01) + mentions (OPT02)
 router.get('/:id/commentaires', idValide, validate, ctrl.listerCommentaires);
 router.post('/:id/commentaires',
-  [idValide, body('contenu').trim().isLength({ min: 2, max: 2000 })
-    .withMessage('Le commentaire doit contenir entre 2 et 2000 caractères')],
+  [
+    idValide,
+    body('contenu').trim().isLength({ min: 2, max: 2000 })
+      .withMessage('Le commentaire doit contenir entre 2 et 2000 caractères'),
+    body('mentions').optional().isArray().withMessage('mentions doit être un tableau')
+  ],
   validate, ctrl.ajouterCommentaire);
 
 // Pièces jointes

@@ -56,4 +56,11 @@ const changerActivation = asyncHandler(async (req, res) => {
   ok(res, user);
 });
 
-module.exports = { lister, creer, modifier, changerActivation };
+// GET /api/users/mention?q=&page=   (OPT02 — accessible à tout utilisateur authentifié)
+const rechercheMention = asyncHandler(async (req, res) => {
+  const { q, page } = req.query;
+  const resultat = await usersModel.searchMention(q, page, req.user.id);
+  ok(res, resultat);
+});
+
+module.exports = { lister, creer, modifier, changerActivation, rechercheMention };

@@ -26,6 +26,29 @@ const creerPourPlusieurs = async (client, userIds, { demande_id, message }) => {
   return creees;
 };
 
+/**
+ * Notifications de mention (OPT02).
+ * Sécurise la liste : dédoublonnage, exclusion de l'auteur, et on ne notifie
+ * que des utilisateurs réellement actifs (les ids sont fournis par le client).
+ * @returns {number} nombre de notifications créées
+ */
+const creerPourMentions = async (auteurId, userIds, { demande_id, message }) => {
+  const cibles = [...new Set(userIds)].filter((id) => Number.isInteger(id) && id !== auteurId);
+  if (cibles.length === 0) return 0;
+
+  const { rows } = await pool.query(
+    'SELECT id FROM users WHERE id = ANY($1) AND actif = TRUE',
+    [cibles]
+  );
+  for (const r of rows) {
+    await pool.query(
+      'INSERT INTO notifications (user_id, demande_id, message) VALUES ($1, $2, $3)',
+      [r.id, demande_id, message]
+    );
+  }
+  return rows.length;
+};
+
 /** Identifiants des juristes et administrateurs actifs (destinataires d'une soumission). */
 const idsJuristesEtAdmins = async (client) => {
   const executeur = client || pool;
@@ -86,6 +109,7 @@ const marquerToutLu = async (userId) => {
 module.exports = {
   creer,
   creerPourPlusieurs,
+  creerPourMentions,
   idsJuristesEtAdmins,
   listerParUser,
   compterNonLues,
