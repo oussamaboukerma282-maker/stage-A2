@@ -70,6 +70,8 @@ function UserDialog({ initial, onSave, onCancel }) {
 export default function Utilisateurs() {
   const { user: moi } = useAuth();
   const [users, setUsers] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
+  const [page, setPage] = useState(1);
   const [filtreRole, setFiltreRole] = useState('');
   const [filtreActif, setFiltreActif] = useState('');
   const [chargement, setChargement] = useState(true);
@@ -78,13 +80,16 @@ export default function Utilisateurs() {
 
   const charger = () => {
     setChargement(true);
-    api.get('/users', { params: { role: filtreRole, actif: filtreActif } })
-      .then((res) => setUsers(res.data.data))
+    api.get('/users', { params: { role: filtreRole, actif: filtreActif, page } })
+      .then((res) => { setUsers(res.data.data); setPagination(res.data.pagination); })
       .catch(() => setErreur('Impossible de charger les utilisateurs.'))
       .finally(() => setChargement(false));
   };
 
-  useEffect(charger, [filtreRole, filtreActif]);
+  useEffect(charger, [filtreRole, filtreActif, page]);
+
+  // Tout changement de filtre ramène à la première page
+  const majFiltre = (setter) => (e) => { setter(e.target.value); setPage(1); };
 
   const creer = async (form) => {
     await api.post('/users', form);
@@ -118,11 +123,11 @@ export default function Utilisateurs() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4 flex gap-3">
-        <select value={filtreRole} onChange={(e) => setFiltreRole(e.target.value)} className={champ}>
+        <select value={filtreRole} onChange={majFiltre(setFiltreRole)} className={champ}>
           <option value="">Tous les rôles</option>
           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LIBELLE[r]}</option>)}
         </select>
-        <select value={filtreActif} onChange={(e) => setFiltreActif(e.target.value)} className={champ}>
+        <select value={filtreActif} onChange={majFiltre(setFiltreActif)} className={champ}>
           <option value="">Tous</option>
           <option value="true">Actifs</option>
           <option value="false">Désactivés</option>
@@ -172,6 +177,21 @@ export default function Utilisateurs() {
           </table>
         )}
       </div>
+
+      {/* Pagination (n'apparaît que s'il y a plus d'une page) */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <button disabled={pagination.page <= 1} onClick={() => setPage(pagination.page - 1)}
+            className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:border-gray-600">
+            ← Précédent
+          </button>
+          <span className="text-sm text-gray-600 dark:text-gray-300">Page {pagination.page} / {pagination.totalPages}</span>
+          <button disabled={pagination.page >= pagination.totalPages} onClick={() => setPage(pagination.page + 1)}
+            className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:border-gray-600">
+            Suivant →
+          </button>
+        </div>
+      )}
 
       {dialog?.mode === 'create' && <UserDialog onSave={creer} onCancel={() => setDialog(null)} />}
       {dialog?.mode === 'edit' && <UserDialog initial={dialog.user} onSave={modifier} onCancel={() => setDialog(null)} />}
