@@ -14,9 +14,10 @@ server/uploads/*
 dist/
 build/
 
-# Logs
+# Logs (Winston écrit dans server/logs/)
 *.log
 npm-debug.log*
+server/logs/
 
 # Système
 .DS_Store
