@@ -21,3 +21,6 @@ npm-debug.log*
 # Système
 .DS_Store
 Thumbs.db
+
+# Support d'etude personnel (ne pas publier)
+docs/GUIDE_SOUTENANCE.md
