@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import Pagination from '../components/Pagination';
 import { useAuth } from '../context/AuthContext';
 
 const ROLE_LIBELLE = { ADMIN: 'Administrateur', JURISTE: 'Juriste', DEMANDEUR: 'Demandeur' };
@@ -178,20 +179,8 @@ export default function Utilisateurs() {
         )}
       </div>
 
-      {/* Pagination (n'apparaît que s'il y a plus d'une page) */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-4">
-          <button disabled={pagination.page <= 1} onClick={() => setPage(pagination.page - 1)}
-            className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:border-gray-600">
-            ← Précédent
-          </button>
-          <span className="text-sm text-gray-600 dark:text-gray-300">Page {pagination.page} / {pagination.totalPages}</span>
-          <button disabled={pagination.page >= pagination.totalPages} onClick={() => setPage(pagination.page + 1)}
-            className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:border-gray-600">
-            Suivant →
-          </button>
-        </div>
-      )}
+      {/* Pagination */}
+      <Pagination page={pagination.page} totalPages={pagination.totalPages} onChange={setPage} />
 
       {dialog?.mode === 'create' && <UserDialog onSave={creer} onCancel={() => setDialog(null)} />}
       {dialog?.mode === 'edit' && <UserDialog initial={dialog.user} onSave={modifier} onCancel={() => setDialog(null)} />}

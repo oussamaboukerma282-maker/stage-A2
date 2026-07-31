@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import StatutBadge, { STATUTS } from '../components/StatutBadge';
+import Pagination from '../components/Pagination';
 import { useAuth } from '../context/AuthContext';
 
 const THEMES = [
@@ -174,19 +175,7 @@ export default function Demandes() {
       </div>
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-4">
-          <button disabled={pagination.page <= 1} onClick={() => changerPage(pagination.page - 1)}
-            className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40">
-            ← Précédent
-          </button>
-          <span className="text-sm text-gray-600 dark:text-gray-300">Page {pagination.page} / {pagination.totalPages}</span>
-          <button disabled={pagination.page >= pagination.totalPages} onClick={() => changerPage(pagination.page + 1)}
-            className="px-3 py-1.5 text-sm border rounded-md disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/40 dark:bg-gray-700/40">
-            Suivant →
-          </button>
-        </div>
-      )}
+      <Pagination page={pagination.page} totalPages={pagination.totalPages} onChange={changerPage} />
     </div>
   );
 }
