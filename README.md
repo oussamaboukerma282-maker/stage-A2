@@ -91,8 +91,9 @@ npm run dev
 | `npm run client` | Lance uniquement le frontend (Vite) |
 | `npm run install:all` | Installe les dépendances des 3 niveaux |
 | `npm run db:schema` | (Re)crée les tables |
-| `npm run db:seed` | Charge les données de démo |
+| `npm run db:seed` | Charge le jeu de démo minimal (6 comptes, 15 demandes) |
 | `npm run db:reset` | `db:schema` puis `db:seed` |
+| `npm run db:demo` | **Jeu de démo enrichi** : 24 utilisateurs, 72 demandes cohérentes étalées sur ~6 mois (idéal pour tester pagination, dashboards, filtres). Mot de passe : `Demo2026!` |
 
 ---
 
