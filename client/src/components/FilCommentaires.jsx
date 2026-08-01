@@ -23,12 +23,18 @@ const detecterRequeteMention = (texte, pos) => {
   return m ? m[1] : null;
 };
 
-// Surligne les « @Prénom Nom » dans un commentaire affiché.
+// Affiche les « @Prénom Nom » sous forme de pastille colorée bien visible.
 const rendreAvecMentions = (texte) => {
   const parts = texte.split(/(@[\p{L}][\p{L}'-]*(?: [\p{L}][\p{L}'-]*)?)/gu);
   return parts.map((p, i) =>
     /^@\p{L}/u.test(p)
-      ? <span key={i} className="text-primaire dark:text-purple-300 font-medium">{p}</span>
+      ? (
+        <span key={i}
+          className="inline rounded px-1 py-0.5 font-semibold whitespace-nowrap
+                     bg-primaire/10 text-primaire dark:bg-purple-400/25 dark:text-purple-200">
+          {p}
+        </span>
+      )
       : <span key={i}>{p}</span>
   );
 };
@@ -164,6 +170,15 @@ export default function FilCommentaires({ demandeId, verrouille }) {
     }
   };
 
+  // Mentions réellement présentes dans le texte (celles qui seront notifiées)
+  const mentionsActives = mentions.filter((m) => contenu.includes(`@${m.label}`));
+
+  // Retire une mention : supprime le « @Prénom Nom » du texte et de la liste
+  const retirerMention = (m) => {
+    setContenu((c) => c.replace(`@${m.label} `, '').replace(`@${m.label}`, ''));
+    setMentions((prev) => prev.filter((x) => x.id !== m.id));
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">
@@ -197,7 +212,8 @@ export default function FilCommentaires({ demandeId, verrouille }) {
       {verrouille ? (
         <p className="text-xs text-gray-400 italic">Cette demande est clôturée : les commentaires sont désactivés.</p>
       ) : (
-        <form onSubmit={publier} className="flex gap-2" ref={wrapperRef}>
+        <form onSubmit={publier} ref={wrapperRef}>
+          <div className="flex gap-2">
           <div className="relative flex-1">
             <input
               ref={inputRef}
@@ -252,6 +268,25 @@ export default function FilCommentaires({ demandeId, verrouille }) {
             className="bg-primaire text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-primaire/90 transition disabled:opacity-50">
             Publier
           </button>
+          </div>
+
+          {/* Pastilles des personnes qui seront notifiées (mentions présentes dans le texte) */}
+          {mentionsActives.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="text-xs text-gray-400">Notifiés :</span>
+              {mentionsActives.map((m) => (
+                <span key={m.id}
+                  className="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5
+                             bg-primaire/10 text-primaire dark:bg-purple-400/25 dark:text-purple-200">
+                  @{m.label}
+                  <button type="button" onClick={() => retirerMention(m)}
+                    className="hover:text-red-600 dark:hover:text-red-400 leading-none" aria-label="Retirer la mention">
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </form>
       )}
       {erreur && <p className="text-red-600 text-sm mt-2">{erreur}</p>}
