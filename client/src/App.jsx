@@ -3,10 +3,11 @@
 // sont des placeholders remplis dans les phases P3 et P5.
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Accueil from './pages/Accueil';
 import Profil from './pages/Profil';
@@ -24,6 +25,15 @@ const Page = ({ children, roles }) => (
   </ProtectedRoute>
 );
 
+// Racine « / » : landing publique pour les visiteurs, tableau de bord pour les connectés
+const Racine = () => {
+  const { isAuthenticated, chargement } = useAuth();
+  if (chargement) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-400">Chargement…</div>;
+  }
+  return isAuthenticated ? <Layout><Accueil /></Layout> : <Landing />;
+};
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -32,7 +42,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
 
-          <Route path="/" element={<Page><Accueil /></Page>} />
+          <Route path="/" element={<Racine />} />
           <Route path="/demandes" element={<Page><Demandes /></Page>} />
           <Route
             path="/demandes/nouvelle"
