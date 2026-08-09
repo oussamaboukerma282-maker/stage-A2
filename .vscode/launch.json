@@ -1,0 +1,32 @@
+{
+  // Configurations de lancement VS Code — appuie sur F5 (ou onglet "Exécuter et déboguer")
+  // et choisis une configuration dans le menu déroulant en haut.
+  //
+  // Le type "node-terminal" ouvre un vrai terminal intégré, lance la commande npm,
+  // et attache automatiquement le débogueur au serveur Node (points d'arrêt possibles
+  // dans le code du dossier server/). Le client React (Vite) tourne dans le même terminal.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Lancer l'app (serveur + client)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "🔧 Serveur API seul (debug)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run server",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "🌐 Client React seul (Vite)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run client",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
