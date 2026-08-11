@@ -8,6 +8,7 @@ const ctrl = require('../controllers/statsController');
 router.use(auth);
 
 router.get('/admin', roles('ADMIN'), ctrl.admin);
+router.post('/admin/bilan-ia', roles('ADMIN'), ctrl.bilanIA);
 router.get('/demandeur', roles('DEMANDEUR'), ctrl.demandeur);
 router.get('/juriste', roles('JURISTE', 'ADMIN'), ctrl.juriste);
 

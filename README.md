@@ -22,6 +22,7 @@ stage A2 à Natixis Algeria (Direction des Affaires Juridiques).
 - 💬 Fil de commentaires sur les demandes
 - 🧾 Export PDF d'une fiche demande
 - 🔳 QR code intégré au PDF (accès à la demande en ligne)
+- 🤖 Bilan d'activité rédigé par IA (OpenAI) à partir des statistiques du tableau de bord — panneau à l'écran + export PDF. **Confidentialité** : seuls des agrégats anonymes (compteurs, taux, moyennes) sont envoyés ; aucune donnée nominative ni contenu de demande. Désactivé automatiquement si `OPENAI_API_KEY` est absente.
 
 ---
 

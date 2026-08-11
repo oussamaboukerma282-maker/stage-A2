@@ -51,6 +51,53 @@ const imageAvecFond = (chart) => new Promise((resolve) => {
   img.src = src;
 });
 
+// Icône « étincelles » (IA)
+const IconeIA = ({ className = 'w-4 h-4' }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4M13 3l2.2 5.8L21 11l-5.8 2.2L13 19l-2.2-5.8L5 11l5.8-2.2L13 3z" />
+  </svg>
+);
+
+// Rend un segment de texte en gérant le gras **...**
+const enGras = (ligne) =>
+  ligne.split(/(\*\*[^*]+\*\*)/g).map((seg, i) =>
+    seg.startsWith('**') && seg.endsWith('**')
+      ? <strong key={i}>{seg.slice(2, -2)}</strong>
+      : <span key={i}>{seg}</span>
+  );
+
+// Rendu « markdown-léger » du bilan IA (titres ##, puces -, gras **)
+function RenduBilan({ texte }) {
+  const lignes = texte.split('\n');
+  const blocs = [];
+  let puces = null;
+
+  const viderPuces = () => { if (puces) { blocs.push({ type: 'ul', items: puces }); puces = null; } };
+
+  lignes.forEach((brute) => {
+    const l = brute.trim();
+    if (l.startsWith('## ')) { viderPuces(); blocs.push({ type: 'h', texte: l.slice(3) }); }
+    else if (l.startsWith('- ') || l.startsWith('* ')) { (puces = puces || []).push(l.slice(2)); }
+    else if (l === '') { viderPuces(); }
+    else { viderPuces(); blocs.push({ type: 'p', texte: l }); }
+  });
+  viderPuces();
+
+  return (
+    <div className="space-y-3 text-sm leading-relaxed text-gray-700 dark:text-gray-200">
+      {blocs.map((b, i) => {
+        if (b.type === 'h') return <h4 key={i} className="font-semibold text-marine dark:text-purple-300 mt-4 first:mt-0">{b.texte}</h4>;
+        if (b.type === 'ul') return (
+          <ul key={i} className="list-disc pl-5 space-y-1">
+            {b.items.map((it, j) => <li key={j}>{enGras(it)}</li>)}
+          </ul>
+        );
+        return <p key={i}>{enGras(b.texte)}</p>;
+      })}
+    </div>
+  );
+}
+
 function Carte({ titre, onDownload, children }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
@@ -72,6 +119,11 @@ export default function DashboardAdmin() {
   const [stats, setStats] = useState(null);
   const [erreur, setErreur] = useState(null);
   const [genPdf, setGenPdf] = useState(false);
+
+  // Bilan d'activité IA
+  const [bilan, setBilan] = useState(null);          // { texte, modele, genereLe }
+  const [genBilan, setGenBilan] = useState(false);
+  const [erreurBilan, setErreurBilan] = useState(null);
 
   // Références vers les instances Chart.js (pour l'export image)
   const refStatut = useRef(null);
@@ -161,6 +213,62 @@ export default function DashboardAdmin() {
     }
   };
 
+  // --- Bilan IA ------------------------------------------------------------
+  const genererBilan = async () => {
+    setGenBilan(true);
+    setErreurBilan(null);
+    try {
+      const res = await api.post('/stats/admin/bilan-ia');
+      setBilan(res.data.data);
+    } catch (err) {
+      setErreurBilan(err.response?.data?.error?.message || "Échec de la génération du bilan.");
+    } finally {
+      setGenBilan(false);
+    }
+  };
+
+  const telechargerBilanPDF = async () => {
+    if (!bilan) return;
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const M = 15, contentW = 210 - 2 * M;
+    let y = 20;
+
+    doc.setFont('helvetica', 'bold').setFontSize(18).setTextColor(91, 44, 141);
+    doc.text("Bilan d'activité — Avis Juridiques", M, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(120);
+    doc.text(`Généré le ${new Date(bilan.genereLe).toLocaleString('fr-FR')}`, M, y);
+    y += 10;
+
+    // Saut de page si nécessaire
+    const saut = (h) => { if (y + h > 285) { doc.addPage(); y = 20; } };
+
+    bilan.texte.split('\n').forEach((brute) => {
+      const l = brute.trim();
+      if (l === '') { y += 3; return; }
+      if (l.startsWith('## ')) {
+        y += 3; saut(8);
+        doc.setFont('helvetica', 'bold').setFontSize(12).setTextColor(26, 35, 126);
+        doc.text(l.slice(3), M, y); y += 6;
+        return;
+      }
+      const puce = l.startsWith('- ') || l.startsWith('* ');
+      const txt = (puce ? '•  ' : '') + l.replace(/^[-*]\s/, '').replace(/\*\*/g, '');
+      doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(40);
+      const lignes = doc.splitTextToSize(txt, contentW - (puce ? 4 : 0));
+      lignes.forEach((ln) => { saut(6); doc.text(ln, M + (puce ? 4 : 0), y); y += 5; });
+    });
+
+    // Pied de page : mention de confidentialité
+    doc.setFont('helvetica', 'italic').setFontSize(8).setTextColor(150);
+    doc.text(
+      `Synthèse rédigée par IA (${bilan.modele}) à partir de données statistiques agrégées et anonymisées.`,
+      M, 292
+    );
+    doc.save('bilan-activite-ia.pdf');
+  };
+
   if (erreur) return <p className="text-red-600">{erreur}</p>;
   if (!stats) return <p className="text-gray-400">Chargement du tableau de bord…</p>;
 
@@ -217,6 +325,56 @@ export default function DashboardAdmin() {
         <Carte titre="Évolution mensuelle" onDownload={() => telechargerPNG(refMensuel, 'evolution-mensuelle')}>
           <Line ref={refMensuel} data={dataMensuel} options={optionsLine} />
         </Carte>
+      </div>
+
+      {/* Bilan d'activité IA */}
+      <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="grid place-items-center w-9 h-9 rounded-lg bg-primaire/10 text-primaire dark:bg-purple-400/15 dark:text-purple-200">
+              <IconeIA className="w-5 h-5" />
+            </span>
+            <div>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100">Bilan d'activité (IA)</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Synthèse rédigée à partir des données agrégées du tableau de bord.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={genererBilan} disabled={genBilan}
+              className="flex items-center gap-2 bg-primaire text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-primaire/90 transition disabled:opacity-60">
+              <IconeIA />
+              {genBilan ? 'Génération…' : bilan ? 'Régénérer' : 'Générer le bilan'}
+            </button>
+            {bilan && (
+              <button onClick={telechargerBilanPDF}
+                className="flex items-center gap-2 border border-primaire text-primaire rounded-md px-4 py-2 text-sm font-medium hover:bg-purple-50 dark:hover:bg-gray-700/40 transition">
+                <IconeTelecharger />
+                PDF
+              </button>
+            )}
+          </div>
+        </div>
+
+        {erreurBilan && <p className="text-red-600 text-sm mt-4">{erreurBilan}</p>}
+
+        {genBilan && !bilan && (
+          <p className="text-gray-400 text-sm mt-4 animate-pulse">L'IA analyse les statistiques…</p>
+        )}
+
+        {bilan && (
+          <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
+            <RenduBilan texte={bilan.texte} />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 italic">
+              Généré le {new Date(bilan.genereLe).toLocaleString('fr-FR')} par IA ({bilan.modele}) — données statistiques agrégées et anonymisées.
+            </p>
+          </div>
+        )}
+
+        {!bilan && !genBilan && !erreurBilan && (
+          <p className="text-gray-400 text-sm mt-4">
+            Cliquez sur « Générer le bilan » pour obtenir une analyse rédigée (synthèse, tendances, points d'attention, recommandations).
+          </p>
+        )}
       </div>
     </div>
   );
