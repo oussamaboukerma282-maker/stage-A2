@@ -61,27 +61,48 @@ async function genererBilan(stats) {
   const modele = process.env.OPENAI_MODEL || 'gpt-4o-mini';
   const donnees = payloadAnonyme(stats);
 
-  let reponse;
-  try {
-    reponse = await fetch(OPENAI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cle}` },
-      body: JSON.stringify({
-        model: modele,
-        temperature: 0.3,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content:
-              "Voici les statistiques agrégées de la période. Rédige le bilan d'activité.\n\n" +
-              JSON.stringify(donnees, null, 2)
-          }
-        ]
-      })
-    });
-  } catch (err) {
-    logger.error('Appel OpenAI échoué (réseau)', { message: err.message });
+  const corps = JSON.stringify({
+    model: modele,
+    temperature: 0.3,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content:
+          "Voici les statistiques agrégées de la période. Rédige le bilan d'activité.\n\n" +
+          JSON.stringify(donnees, null, 2)
+      }
+    ]
+  });
+
+  // Appel avec timeout (30 s) + reprise automatique sur erreur réseau transitoire.
+  const appelUnique = async () => {
+    const ctrl = new AbortController();
+    const minuteur = setTimeout(() => ctrl.abort(), 30000);
+    try {
+      return await fetch(OPENAI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cle}` },
+        body: corps,
+        signal: ctrl.signal
+      });
+    } finally {
+      clearTimeout(minuteur);
+    }
+  };
+
+  let reponse, derniereErreur;
+  for (let tentative = 1; tentative <= 2; tentative++) {
+    try {
+      reponse = await appelUnique();
+      break;
+    } catch (err) {
+      derniereErreur = err;
+      logger.warn(`Appel OpenAI échoué (tentative ${tentative}/2)`, { message: err.message });
+    }
+  }
+  if (!reponse) {
+    logger.error('Appel OpenAI échoué après reprise', { message: derniereErreur?.message });
     throw new AppError(502, 'IA_ERREUR', "Le service d'IA est injoignable. Réessayez plus tard.");
   }
 

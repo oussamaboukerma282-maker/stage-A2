@@ -197,7 +197,7 @@ export default function DashboardAdmin() {
           const h = cellW * ratio;
           doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(80);
           doc.text(label, x, y);
-          doc.addImage(url, 'PNG', x, y + 2, cellW, h);
+          doc.addImage(url, 'PNG', x, y + 2, cellW, h, `rapport-${r}-${c}`, 'FAST');
           hauteurLigne = Math.max(hauteurLigne, h);
         }
         y += hauteurLigne + 14;
@@ -234,16 +234,48 @@ export default function DashboardAdmin() {
     const M = 15, contentW = 210 - 2 * M;
     let y = 20;
 
+    // Saut de page si le contenu à venir (h mm) ne tient plus
+    const saut = (h) => { if (y + h > 285) { doc.addPage(); y = 20; } };
+    // Titre de section homogène
+    const section = (titre) => {
+      y += 4; saut(10);
+      doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(26, 35, 126);
+      doc.text(titre, M, y); y += 7;
+    };
+
+    // --- En-tête ---
     doc.setFont('helvetica', 'bold').setFontSize(18).setTextColor(91, 44, 141);
     doc.text("Bilan d'activité — Avis Juridiques", M, y);
     y += 7;
     doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(120);
     doc.text(`Généré le ${new Date(bilan.genereLe).toLocaleString('fr-FR')}`, M, y);
-    y += 10;
+    y += 6;
+    doc.setDrawColor(91, 44, 141).setLineWidth(0.4).line(M, y, 210 - M, y);
+    y += 8;
 
-    // Saut de page si nécessaire
-    const saut = (h) => { if (y + h > 285) { doc.addPage(); y = 20; } };
+    // --- Indicateurs clés (2 × 2) ---
+    if (stats) {
+      section('Indicateurs clés');
+      const kpis = [
+        ['Total des demandes', String(stats.totalDemandes)],
+        ['Délai moyen de traitement', stats.delaiMoyenJours != null ? `${stats.delaiMoyenJours} j` : '—'],
+        ['Taux de validation', `${stats.tauxValidation} %  (rejet ${stats.tauxRejet} %)`],
+        ['En retard (> 7 j)', String(stats.enRetard)]
+      ];
+      const y0 = y;
+      kpis.forEach((k, i) => {
+        const x = M + (i % 2) * (contentW / 2);
+        const yy = y0 + Math.floor(i / 2) * 16;
+        doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(120);
+        doc.text(k[0], x, yy);
+        doc.setFont('helvetica', 'bold').setFontSize(14).setTextColor(30);
+        doc.text(k[1], x, yy + 7);
+      });
+      y = y0 + 32;
+    }
 
+    // --- Analyse rédigée par l'IA ---
+    section("Analyse détaillée");
     bilan.texte.split('\n').forEach((brute) => {
       const l = brute.trim();
       if (l === '') { y += 3; return; }
@@ -260,12 +292,48 @@ export default function DashboardAdmin() {
       lignes.forEach((ln) => { saut(6); doc.text(ln, M + (puce ? 4 : 0), y); y += 5; });
     });
 
-    // Pied de page : mention de confidentialité
-    doc.setFont('helvetica', 'italic').setFontSize(8).setTextColor(150);
-    doc.text(
-      `Synthèse rédigée par IA (${bilan.modele}) à partir de données statistiques agrégées et anonymisées.`,
-      M, 292
-    );
+    // --- Graphiques (2 × 2, sur une nouvelle page pour rester lisible) ---
+    const charts = [
+      [refStatut, 'Répartition par statut'],
+      [refTheme, 'Demandes par thème'],
+      [refSensibilite, 'Répartition par sensibilité'],
+      [refMensuel, 'Évolution mensuelle']
+    ];
+    if (charts.some(([ref]) => ref.current)) {
+      doc.addPage(); y = 20;
+      section('Graphiques');
+      const cellW = contentW / 2 - 3;
+      for (let r = 0; r < 2; r++) {
+        let hauteurLigne = 0;
+        for (let c = 0; c < 2; c++) {
+          const [ref, label] = charts[r * 2 + c];
+          if (!ref.current) continue;
+          const { url, ratio } = await imageAvecFond(ref.current);
+          const h = cellW * ratio;
+          if (c === 0) saut(h + 10); // saut de page basé sur la 1re colonne de la ligne
+          const x = M + c * (contentW / 2);
+          doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(80);
+          doc.text(label, x, y);
+          // alias unique : évite que jsPDF dédoublonne des graphiques de mêmes dimensions
+          doc.addImage(url, 'PNG', x, y + 2, cellW, h, `graph-${r}-${c}`, 'FAST');
+          hauteurLigne = Math.max(hauteurLigne, h);
+        }
+        y += hauteurLigne + 14;
+      }
+    }
+
+    // --- Pied de page : mention de confidentialité (sur chaque page) ---
+    const total = doc.getNumberOfPages();
+    for (let p = 1; p <= total; p++) {
+      doc.setPage(p);
+      doc.setFont('helvetica', 'italic').setFontSize(8).setTextColor(150);
+      doc.text(
+        `Synthèse rédigée par IA (${bilan.modele}) à partir de données statistiques agrégées et anonymisées.`,
+        M, 292
+      );
+      doc.text(`Page ${p}/${total}`, 210 - M, 292, { align: 'right' });
+    }
+
     doc.save('bilan-activite-ia.pdf');
   };
 
@@ -349,7 +417,7 @@ export default function DashboardAdmin() {
               <button onClick={telechargerBilanPDF}
                 className="flex items-center gap-2 border border-primaire text-primaire rounded-md px-4 py-2 text-sm font-medium hover:bg-purple-50 dark:hover:bg-gray-700/40 transition">
                 <IconeTelecharger />
-                PDF
+                Rapport PDF
               </button>
             )}
           </div>
